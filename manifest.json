@@ -1,0 +1,10 @@
+{
+  "name": "Group variants",
+  "id": "1204018993182633422",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": [
+    "figma"
+  ]
+}
