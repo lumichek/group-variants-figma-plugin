@@ -1,7 +1,6 @@
-import { sortVariants, moveVariants, resizeVariantsParent } from "./services/sorting";
+import { sortVariants, moveVariants } from "./services/sorting";
 
 export {
   sortVariants,
-  moveVariants,
-  resizeVariantsParent
+  moveVariants
 };

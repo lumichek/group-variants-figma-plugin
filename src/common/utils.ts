@@ -4,7 +4,6 @@ export function throttle(func: any, ms: number) {
   let savedThis = null;
 
   return function $throttle(...args: any[]) {
-    console.log('call', isSuspended, ms);
     if (isSuspended) {
       savedArgs = args;
       savedThis = this;

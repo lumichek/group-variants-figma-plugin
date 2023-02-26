@@ -3,7 +3,7 @@ import { TMessage } from '../common/types';
 import { onSelectionChange } from './events/onSelectionHandler';
 import { onSortMessage } from './events/onSortMessageHandler';
 
-figma.showUI(__html__, { width: 480, height: 520 });
+figma.showUI(__html__, { width: 400, height: 665 });
 
 figma.on('selectionchange', () => {
   const msg = onSelectionChange(figma.currentPage);
@@ -38,7 +38,6 @@ figma.on('run', () => {
 });
 
 figma.ui.onmessage = (msg: TMessage) => {
-  console.log('figma message', msg);
   if (msg.type === MESSAGE_CHANGE_PROPERTIES) {
     onSortMessage(
       figma.currentPage,

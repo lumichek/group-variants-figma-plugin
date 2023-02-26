@@ -14,3 +14,7 @@ export const MESSAGE_CHANGE_PROPERTIES = 'MESSAGE_CHANGE_PROPERTIES';
 
 // Numbers
 export const DEFAULT_GAP = 40;
+
+// Gaps
+export const ROWS_GAP_FIELD = 'ROWS_GAP_FIELD';
+export const COLUMNS_GAP_FIELD = 'COLUMNS_GAP_FIELD';

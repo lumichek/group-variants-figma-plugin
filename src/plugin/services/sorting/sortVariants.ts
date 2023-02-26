@@ -21,8 +21,11 @@ export function sortVariants(
     let columnStartIndex = 0;
     let rowPropertyValuesLength = 0;
     let columnPropertyValuesLength = 0;
+
     let columnGap = 0;
     let rowGap = 0;
+    let rowGaps = 0;
+    let columnGaps = 0;
 
     const {variantProperties: variantPropertiesValues} = variant;
 
@@ -35,17 +38,15 @@ export function sortVariants(
         columnIndex += columnStartIndex + (columnPropertyValuesLength === 0 ? propertyIndex : 0);
         columnPropertyValuesLength = (columnPropertyValuesLength || 1) * propertyValues.length;
 
-        if (propertyIndex > 1) {
-          columnGap = gaps[propertyKey];
-        }
+        columnGap += (propertyIndex - 1) * columnGaps + gaps[propertyKey] * (propertyIndex - 1);
+        columnGaps = columnGaps * propertyValues.length + (propertyValues.length - 1) * gaps[propertyKey];
       } else {
         rowStartIndex = (propertyIndex - 1) * rowPropertyValuesLength;
         rowIndex += rowStartIndex + (rowPropertyValuesLength === 0 ? propertyIndex : 0);
         rowPropertyValuesLength = (rowPropertyValuesLength || 1) * propertyValues.length;
 
-        if (propertyIndex > 1) {
-          rowGap = gaps[propertyKey];
-        }
+        rowGap += (propertyIndex - 1) * rowGaps + gaps[propertyKey] * (propertyIndex - 1);
+        rowGaps = rowGaps * propertyValues.length + (propertyValues.length - 1) * gaps[propertyKey];
       }
     }
 
@@ -53,8 +54,8 @@ export function sortVariants(
       variant,
       columnIndex: columnIndex || 1,
       rowIndex: rowIndex || 1,
-      rowGap,
-      columnGap
+      rowGap: rowGap || 0,
+      columnGap: columnGap || 0
     });
   }
 

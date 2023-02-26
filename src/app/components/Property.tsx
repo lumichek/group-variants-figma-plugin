@@ -1,15 +1,16 @@
 import * as React from 'react';
-import { Section, SectionBlock, SectionTitle, Input } from 'figma-react-ui-kit';
 import PropertyValues from './PropertyValues';
 import { SortDirections } from '../../common/types';
-import RadioButton from './RadioButton';
-import { throttle } from '../../common/utils';
+import Toggle from './Toggle';
+import Input from './Input';
+import Divider from './Divider';
 
 export type TPropertyProps = {
   title: string;
   values: string[];
   direction: SortDirections | undefined;
   gap: number | undefined;
+  hasDivider?: boolean;
   onChange: (
     propertyKey: string,
     {values, direction, gap}: {values?: string[], direction?: SortDirections, gap?: number}
@@ -17,61 +18,35 @@ export type TPropertyProps = {
 }
 
 export default function Property(props: TPropertyProps) {
-  const {title, values, onChange, direction, gap} = props;
-  const [inputGap, setInputGap] = React.useState(gap);
+  const {title, values, onChange, direction, gap, hasDivider} = props;
 
-  React.useEffect(() => {
-    setInputGap(gap);
-  }, [gap]);
-
-  const onChangeGap = React.useRef(throttle((gap: number) => {
-    onChange(title, {gap});
-  }, 1000));
-  const onChangeInputGap = (changedGap: React.ChangeEvent<HTMLInputElement>) => {
-    const numberGap = Number(changedGap.target.value);
-
-    onChangeGap.current(numberGap);
-    setInputGap(numberGap);
+  const onChangeGap = (changedGap: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(title, {gap: Number(changedGap.target.value)});
   };
-  const onChangeDirection = (selectedDirection: SortDirections) => {
-    onChange(title, {direction: selectedDirection});
+  const onChangeDirection = (isColumns) => {
+    onChange(title, {direction: isColumns ? SortDirections.COLUMNS : SortDirections.ROWS});
   };
   const onChangeValues = (sortedValues: string[]) => {
     onChange(title, {values: sortedValues});
   };
 
   return (
-    <Section>
-      <div className='section-container-title'>
-        <SectionTitle>
+    <div className='section__container'>
+      <div className='section__header'>
+        <span className='section__title'>
           {title}
-        </SectionTitle>
-        <div className='radio-button-container'>
-          <RadioButton
+        </span>
+        <div className='section__controls'>
+          <Toggle
             onChange={onChangeDirection}
             id={`${title}-columns`}
-            isSelected={direction === SortDirections.COLUMNS}
-            label={"columns"}
-            value={SortDirections.COLUMNS}
+            isChecked={direction === SortDirections.COLUMNS}
           />
-          <RadioButton
-            onChange={onChangeDirection}
-            id={`${title}-rows`}
-            isSelected={direction === SortDirections.ROWS}
-            label={"row"}
-            value={SortDirections.ROWS}
-          />
-        </div>
-        <div className='input-container'>
-          <SectionTitle>
-            {'Gap: '}
-          </SectionTitle>
-          <Input value={inputGap || 0} onChange={onChangeInputGap} />
+          <Input value={gap || 0} onChange={onChangeGap} unit={'px'} />
         </div>
       </div>
-      <SectionBlock>
-        <PropertyValues values={values} onChange={onChangeValues} />
-      </SectionBlock>
-    </Section>
+      <PropertyValues values={values} onChange={onChangeValues} />
+      {hasDivider && <Divider />}
+    </div>
   );
 };

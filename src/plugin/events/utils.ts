@@ -23,12 +23,29 @@ export function checkSelection(page: PageNode) {
 }
 
 export function getPropertiesInfo(componentSet: ComponentSetNode, variants: ComponentNode[]) {
+  console.log(componentSet);
+  const [root] = variants;
   const propertiesList = fetchProperties(componentSet, PropertiesListType);
   const propertiesMap = fetchProperties(componentSet, PropertiesMapType);
-  const propertiesDirections = sortProperties(variants, propertiesMap);
+  const {directions, gaps} = sortProperties(variants, propertiesMap);
+  const {name: propertiesString} = root;
+  const propertiesOrders = propertiesString.split(', ');
+
+  let propertiesListSorted = [];
+
+  for (const propertyData of propertiesOrders) {
+    const [propertyKey] = propertyData.split('=');
+
+    propertiesListSorted.push(propertiesList.find(({key}) => key === propertyKey));
+  }
+
+  if (propertiesListSorted.length < propertiesList.length) {
+    propertiesListSorted = propertiesList;
+  }
 
   return {
-    properties: propertiesList,
-    directions: propertiesDirections
+    properties: propertiesListSorted,
+    directions,
+    gaps
   };
 }

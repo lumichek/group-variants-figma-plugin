@@ -1,68 +1,191 @@
-.sections-container {
+:root {
+  --white: #fff;
+  --black: #000;
+  --color-bg:  #E6E6E6;
+  --color-bg-hover: #F0F0F0;
+  --color-bg-focus: #0D99FF;
+  --color-text: rgba(0, 0, 0, 0.9);
+}
+
+* {
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.plugin__container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.section__container {
+  width: 100%;
+  padding: 16px 16px 0 16px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 0;
-  width: 420px;
+  justify-content: center;
 }
 
-.sections-container > * {
+.section__header {
   width: 100%;
-}
-
-.sections-container > * > *{
-  width: 100%;
-}
-
-.section-container-title {
+  height: 30px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
 }
 
-.sortable-item {
+.section__title {
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--color-text);
+}
+
+.section__controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sortable__item {
   list-style: none;
-  background-color: whitesmoke;
+  background-color: var(--white);
   cursor: grab;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  height: 30px;
+  gap: 9px;
 }
 
-.sortable-item > * {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+.sortable__item-icon {
+  opacity: 0;
 }
 
-.sortable-item + .sortable-item {
-  margin-top: 10px;
-}
-
-.sortable-list {
+.sortable__list {
   padding: 0;
 }
 
-.radio-button {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
+.sortable__item-text {
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--color-text);
 }
 
-.radio-button-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+.sortable__list:hover > .sortable__item > .sortable__item-icon {
+  opacity: 1;
 }
 
-.input-container {
+.sortable__item:hover > .sortable__item-icon > svg {
+  fill: var(--black);
+}
+
+.toggle__wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle__container {
+  position: relative;
+  display: flex;
+  border: 1px solid var(--color-bg);
+  border-radius: 2px;
+  width: 66px;
+  height: 30px;
+}
+
+.toggle__input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle__block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.toggle__input:focus + .toggle__container {
+  border: 1px solid var(--color-bg-focus);
+}
+
+.toggle__input:checked + .toggle__container > .toggle__block:last-of-type:hover {
+  background-color: var(--white);
+}
+
+.toggle__input:not(:checked) + .toggle__container > .toggle__block:first-of-type:hover {
+  background-color: var(--white);
+}
+
+.toggle__block:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.toggle__input:checked + .toggle__container {
+  background: linear-gradient(to right, var(--color-bg) 0% 50%, var(--white) 50% 100%);
+}
+
+.toggle__input:not(checked) + .toggle__container {
+  background: linear-gradient(to left, var(--color-bg) 0% 50%, var(--white) 50% 100%);
+}
+
+.input__wrapper {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 5px;
+  gap: 4px;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0px 6px;
+  border: 0;
+  outline: 0;
+  width: 38px;
+  height: 30px;
+  color: var(--color-text);
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 13px;
+  border: 1px solid var(--color-bg);
+  border-radius: 2px;
+}
+
+.input:focus {
+  border: 1px solid var(--color-bg-focus);
+}
+
+.input__unit {
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 13px;
+  color: var(--color-text);
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--color-bg);
+  margin-top: 16px;
 }

@@ -1,4 +1,4 @@
-import { DEFAULT_GAP } from '../../../common/constants';
+import { COLUMNS_GAP_FIELD, ROWS_GAP_FIELD } from '../../../common/constants';
 import {
   TBorders,
   SortDirections,
@@ -6,7 +6,8 @@ import {
   TDirections,
   TPropertiesValues,
   TVariant,
-  TGaps
+  TGaps,
+  Size
 } from './../../../common/types';
 
 export function findNextVariant(variants: ComponentNode[]) {
@@ -65,43 +66,6 @@ export function collectProperties(
   return compareFn(root.variantProperties, variant?.variantProperties);
 }
 
-export function collectGaps(directions: TDirections, variants: ComponentNode[]): TGaps {
-  const gaps = {};
-
-  for (let i = 0; i < variants.length; i++) {
-    for (let j = i + 1; j < variants.length; j++) {
-      const aVariant = variants[i];
-      const bVariant = variants[j];
-      const {variantProperties: aVariantProperties} = aVariant;
-      const {variantProperties: bVariantProperties} = bVariant;
-
-      Object.keys(directions).forEach((propertyKey) => {
-        if (aVariantProperties[propertyKey] === bVariantProperties[propertyKey]) {
-          return;
-        }
-
-        let gap = 0;
-
-        if (directions[propertyKey] === SortDirections.COLUMNS) {
-          gap = Math.abs(aVariant.x - bVariant.x) -
-          (aVariant.x > bVariant.x ? bVariant.width : aVariant.width);
-        } else {
-          gap = Math.abs(aVariant.y - bVariant.y) -
-          (aVariant.y > bVariant.y ? bVariant.height : aVariant.height);
-        }
-
-        if (!gaps[propertyKey]) {
-          gaps[propertyKey] = gap;
-        } else if (gap > 0) {
-          gaps[propertyKey] = Math.min(gap, gaps[propertyKey]);
-        }
-      });
-    }
-  }
-
-  return gaps;
-}
-
 export function fillDirections(
   properties: Array<keyof TPropertiesMap>, direction: SortDirections
 ): TDirections {
@@ -112,33 +76,83 @@ export function fillDirections(
   }, {});
 }
 
-export function moveVariants(variants: TVariant[]): void {
-  console.log('VARIANTS MOVED', variants);
-  const gap = DEFAULT_GAP;
-  const {variant: root} = variants[0];
-  const {width, height} = root;
-
-  for (const variant of variants) {
-    const {variant: node, rowIndex, columnIndex, rowGap, columnGap} = variant;
-
-    node.x = gap + (width + columnGap) * (columnIndex - 1);
-    node.y = gap + (height + rowGap) * (rowIndex - 1);
-  }
+export function findVariantByIndex(variants: TVariant[], rowIndex: number, columnIndex: number) {
+  return variants.find(({rowIndex: variantRowIndex, columnIndex: variantColumnIndex}) =>
+    variantRowIndex === rowIndex && variantColumnIndex === columnIndex)
 }
 
-export function resizeVariantsParent(node: ComponentSetNode, variants: TVariant[]): void {
-  const gap = DEFAULT_GAP;
-  const {variant: root} = variants[0];
-  const {width: variantWidth, height: variantHeight} = root;
-  let width = 0;
-  let height = 0;
+export function moveVariants(variants: TVariant[], gaps: TGaps): Size {
+  let rowIndex = 1;
+  let columnIndex = 1;
 
-  for (const variant of variants) {
-    const {rowIndex, columnIndex, rowGap, columnGap} = variant;
+  const root = findVariantByIndex(variants, rowIndex, columnIndex);
 
-    width = Math.max((variantWidth + columnGap) * columnIndex + gap, width);
-    height = Math.max((variantHeight + rowGap) * rowIndex + gap, height);
+  let currentVariant = root;
+
+  let rowsHeight = 0;
+  let columnsWidth = 0;
+
+  let maxRowHeight = 0;
+  let maxColumnWidth = 0;
+
+  let rowsHeightAcc = gaps[COLUMNS_GAP_FIELD];
+  let columnsWidthAcc = gaps[ROWS_GAP_FIELD];
+
+  // Calculate only y coordinate
+  while (currentVariant) {
+    const {variant: node, rowGap} = currentVariant;
+
+    if (node.height > maxRowHeight) {
+      maxRowHeight = node.height;
+    }
+
+    node.y = rowsHeightAcc + rowGap;
+    // console.log(currentVariant, rowsHeightAcc, rowGap);
+
+    currentVariant = findVariantByIndex(variants, rowIndex, columnIndex + 1);
+
+    if (!currentVariant) {
+      rowIndex++;
+      columnIndex = 1;
+      rowsHeightAcc += maxRowHeight;
+      maxRowHeight = 0;
+      rowsHeight = rowsHeightAcc + rowGap;
+      currentVariant = findVariantByIndex(variants, rowIndex, columnIndex);
+    } else {
+      columnIndex++;
+    }
   }
 
-  node.resizeWithoutConstraints(width, height);
+  rowIndex = 1;
+  columnIndex = 1;
+  currentVariant = root;
+
+  // Calculate only x coordinate
+  while (currentVariant) {
+    const {variant: node, columnGap} = currentVariant;
+
+    if (node.width > maxColumnWidth) {
+      maxColumnWidth = node.width;
+    }
+
+    node.x = columnsWidthAcc + columnGap;
+
+    currentVariant = findVariantByIndex(variants, rowIndex + 1, columnIndex);
+
+    if (!currentVariant) {
+      columnIndex++;
+      rowIndex = 1;
+      columnsWidthAcc += maxColumnWidth;
+      maxColumnWidth = 0;
+      columnsWidth = columnsWidthAcc + columnGap;
+      currentVariant = findVariantByIndex(variants, rowIndex, columnIndex);
+    } else {
+      rowIndex++;
+    }
+  }
+
+  return {
+    width: columnsWidth + gaps[ROWS_GAP_FIELD],
+    height: rowsHeight + gaps[COLUMNS_GAP_FIELD]
+  };
 }

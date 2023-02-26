@@ -3,6 +3,11 @@ export const enum SortDirections {
   COLUMNS = 'COLUMNS'
 };
 
+export type Size = {
+  width: number;
+  height: number;
+}
+
 export const PropertiesMapType = 'MAP';
 export const PropertiesListType = 'LIST';
 export type TPropertiesType = typeof PropertiesMapType | typeof PropertiesListType;

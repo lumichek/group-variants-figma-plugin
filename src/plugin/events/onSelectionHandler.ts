@@ -7,7 +7,6 @@ import {
   MESSAGE_GET_PROPERTIES
 } from "../../common/constants";
 import { TMessage } from "../../common/types";
-import { calculatePropertiesGaps } from "../propertiesController";
 import { checkSelection, getPropertiesInfo } from "./utils";
 
 export function onSelectionChange(page: PageNode): TMessage | TMessage[] {
@@ -24,8 +23,7 @@ export function onSelectionChange(page: PageNode): TMessage | TMessage[] {
   const variantsParent = (selectedNode as ComponentSetNode);
   const variants = variantsParent.children as ComponentNode[];
 
-  const {properties, directions} = getPropertiesInfo(variantsParent, variants);
-  const gaps = calculatePropertiesGaps(directions, variants);
+  const {properties, directions, gaps} = getPropertiesInfo(variantsParent, variants);
 
   return [
     {

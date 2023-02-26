@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "lib": ["es6", "dom", "es2017"],
     "outDir": "dist",
     "jsx": "react",
     "noUnusedLocals": true,
@@ -13,5 +14,6 @@
       "./node_modules/@types",
       "./node_modules/@figma"
     ]
-  }
+  },
+  "include": ["./src/config/index.d.ts", "src"]
 }

@@ -1,25 +1,22 @@
 import * as React from 'react';
 import { SortableContainer, SortableElement } from 'react-sortable-hoc';
 import { arrayMoveImmutable as arrayMove } from 'array-move';
-import { SectionBlock, SectionTitle } from 'figma-react-ui-kit';
-import { MdDragHandle } from 'react-icons/md';
+import DragIcon from '../../icons/DragIcon.svg';
 
 const SortableItem = SortableElement(({ value }) => (
-  <li className='sortable-item'>
-    <SectionBlock>
-      <MdDragHandle />
-      <span className='sortable-item-text'>
-        <SectionTitle>
-          {value}
-        </SectionTitle>
-      </span>
-    </SectionBlock>
+  <li className='sortable__item'>
+    <div className='sortable__item-icon'>
+      <img src={DragIcon} alt={'Drag icon'} />
+    </div>
+    <span className='sortable__item-text'>
+      {value}
+    </span>
   </li>
 ));
 
 const SortableList = SortableContainer(({items}) => {
   return (
-    <ul className='sortable-list'>
+    <ul className='sortable__list'>
       {items.map((value, index) => (
         <SortableItem key={`item-${value}`} index={index} value={value} />
       ))}

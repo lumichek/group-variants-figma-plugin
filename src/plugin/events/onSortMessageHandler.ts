@@ -1,5 +1,5 @@
 import { TDirections, TGaps, TPropertiesList } from "../../common/types";
-import { sortVariants, moveVariants, resizeVariantsParent } from "../variantsController";
+import { sortVariants, moveVariants } from "../variantsController";
 import { checkSelection } from "./utils";
 
 export function onSortMessage(
@@ -20,6 +20,7 @@ export function onSortMessage(
 
   const sortedVariants = sortVariants(variants, properties, {directions, gaps});
 
-  moveVariants(sortedVariants);
-  resizeVariantsParent(variantsParent, sortedVariants);
+  const parentSize = moveVariants(sortedVariants, gaps);
+
+  variantsParent.resizeWithoutConstraints(parentSize.width, parentSize.height);
 }

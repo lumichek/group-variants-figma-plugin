@@ -73,14 +73,15 @@ export default function App() {
     properties.length > 0;
 
   return (
-    <div className='sections-container'>
+    <div className='plugin__container'>
       {
-        isReady && properties.map(({key, values}) => (
+        isReady && properties.map(({key, values}, index) => (
           <Property
             key={key}
             title={key}
             values={values}
             direction={directions[key]}
+            hasDivider={index !== properties.length - 1}
             gap={gaps[key]}
             onChange={onPropertyChangeHandler}
           />
