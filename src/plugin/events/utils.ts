@@ -23,7 +23,6 @@ export function checkSelection(page: PageNode) {
 }
 
 export function getPropertiesInfo(componentSet: ComponentSetNode, variants: ComponentNode[]) {
-  console.log(componentSet);
   const [root] = variants;
   const propertiesList = fetchProperties(componentSet, PropertiesListType);
   const propertiesMap = fetchProperties(componentSet, PropertiesMapType);

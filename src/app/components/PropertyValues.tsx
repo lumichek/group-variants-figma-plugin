@@ -1,12 +1,21 @@
 import * as React from 'react';
-import { SortableContainer, SortableElement } from 'react-sortable-hoc';
+import { SortableContainer, SortableContainerProps, SortableElement, SortableElementProps } from 'react-sortable-hoc';
 import { arrayMoveImmutable as arrayMove } from 'array-move';
-import DragIcon from '../../icons/DragIcon.svg';
+import DragIcon from '../../icons/DragIcon';
 
-const SortableItem = SortableElement(({ value }) => (
+interface ISortableItemProps extends SortableElementProps {
+  value: string;
+  className?: string
+}
+interface ISortableContainerProps extends SortableContainerProps {
+  items: string[];
+  className?: string;
+}
+
+const SortableItem: React.ComponentClass<ISortableItemProps, any> = SortableElement(({ value }: ISortableItemProps) => (
   <li className='sortable__item'>
     <div className='sortable__item-icon'>
-      <img src={DragIcon} alt={'Drag icon'} />
+      <DragIcon />
     </div>
     <span className='sortable__item-text'>
       {value}
@@ -14,7 +23,7 @@ const SortableItem = SortableElement(({ value }) => (
   </li>
 ));
 
-const SortableList = SortableContainer(({items}) => {
+const SortableList: React.ComponentClass<ISortableContainerProps, any> = SortableContainer(({items}: ISortableContainerProps) => {
   return (
     <ul className='sortable__list'>
       {items.map((value, index) => (
@@ -37,6 +46,6 @@ export default function PropertyValues(props: TPropertyValuesProps) {
   };
 
   return (
-    <SortableList items={values} onSortEnd={onSortEnd} />
+    <SortableList items={values} onSortEnd={onSortEnd} helperClass='sortable__item_dragged'  />
   );
 };

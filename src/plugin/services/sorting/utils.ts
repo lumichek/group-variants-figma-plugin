@@ -10,6 +10,72 @@ import {
   Size
 } from './../../../common/types';
 
+export function findRowGap(prevVariant: ComponentNode, variant: ComponentNode, variants: ComponentNode[]) {
+  let gap = variant.y - prevVariant.y - prevVariant.height;
+
+  let borders: TBorders = {
+    xFrom: 0,
+    yFrom: prevVariant.y,
+    xBefore: Number.MAX_SAFE_INTEGER,
+    yBefore: variant.y - gap
+  };
+  const next = findNextVariant(variants);
+
+  let root = prevVariant;
+
+  while (root) {
+    const newGap = variant.y - root.y - root.height;
+
+    if (newGap < gap) {
+      gap = newGap;
+    }
+
+    borders = {
+      xFrom: root.x + root.width,
+      yFrom: prevVariant.y,
+      xBefore: Number.MAX_SAFE_INTEGER,
+      yBefore: variant.y - gap
+    };
+
+    root = next(borders);
+  }
+
+  return gap;
+}
+
+export function findColumnGap(prevVariant: ComponentNode, variant: ComponentNode, variants: ComponentNode[]) {
+  let gap = variant.x - prevVariant.x - prevVariant.width;
+
+  let borders: TBorders = {
+    xFrom: prevVariant.x,
+    yFrom: 0,
+    xBefore: variant.x - gap,
+    yBefore: Number.MAX_SAFE_INTEGER
+  };
+  const next = findNextVariant(variants);
+
+  let root = prevVariant;
+
+  while (root) {
+    const newGap = variant.x - root.x - root.width;
+
+    if (newGap < gap) {
+      gap = newGap;
+    }
+
+    borders = {
+      xFrom: prevVariant.x,
+      yFrom: root.y + root.height,
+      xBefore: variant.x - gap,
+      yBefore: Number.MAX_SAFE_INTEGER
+    };
+
+    root = next(borders);
+  }
+
+  return gap;
+}
+
 export function findNextVariant(variants: ComponentNode[]) {
   return function(borders: TBorders): ComponentNode {
     const {xFrom, yFrom, xBefore, yBefore} = borders;
@@ -20,13 +86,13 @@ export function findNextVariant(variants: ComponentNode[]) {
 
     for (const variant of variants) {
       if (
-        variant.x > xFrom &&
-        variant.y > yFrom &&
+        variant.x >= xFrom &&
+        variant.y >= yFrom &&
         variant.x <= xBefore &&
         variant.y <= yBefore &&
         variant.x <= xMin &&
         variant.y <= yMin
-        ) {
+      ) {
         result = variant;
         xMin = variant.x;
         yMin = variant.y;
@@ -107,7 +173,6 @@ export function moveVariants(variants: TVariant[], gaps: TGaps): Size {
     }
 
     node.y = rowsHeightAcc + rowGap;
-    // console.log(currentVariant, rowsHeightAcc, rowGap);
 
     currentVariant = findVariantByIndex(variants, rowIndex, columnIndex + 1);
 

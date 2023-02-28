@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { Section, SectionBlock } from 'figma-react-ui-kit';
-import '../../../node_modules/figma-react-ui-kit/lib/index.css';
 import '../styles.css';
 import Property from './Property';
 import useMessage from '../hooks/useMessage';
@@ -75,22 +73,21 @@ export default function App() {
   return (
     <div className='plugin__container'>
       {
-        isReady && properties.map(({key, values}, index) => (
+        isReady && properties.map(({key, values}) => (
           <Property
             key={key}
             title={key}
             values={values}
             direction={directions[key]}
-            hasDivider={index !== properties.length - 1}
             gap={gaps[key]}
             onChange={onPropertyChangeHandler}
           />
         ))
       }
       {!isSelected && (
-        <Section>
-          <SectionBlock>{'Select a component with a set of at least two variants'}</SectionBlock>
-        </Section>
+        <div className={'error__block'}>
+          {'Select a component with a set of at least two variants'}
+        </div>
       )}
     </div>
   );

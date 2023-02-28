@@ -10,7 +10,6 @@ export type TPropertyProps = {
   values: string[];
   direction: SortDirections | undefined;
   gap: number | undefined;
-  hasDivider?: boolean;
   onChange: (
     propertyKey: string,
     {values, direction, gap}: {values?: string[], direction?: SortDirections, gap?: number}
@@ -18,10 +17,10 @@ export type TPropertyProps = {
 }
 
 export default function Property(props: TPropertyProps) {
-  const {title, values, onChange, direction, gap, hasDivider} = props;
+  const {title, values, onChange, direction, gap} = props;
 
-  const onChangeGap = (changedGap: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(title, {gap: Number(changedGap.target.value)});
+  const onChangeGap = (newGap: number) => {
+    onChange(title, {gap: newGap});
   };
   const onChangeDirection = (isColumns) => {
     onChange(title, {direction: isColumns ? SortDirections.COLUMNS : SortDirections.ROWS});
@@ -46,7 +45,7 @@ export default function Property(props: TPropertyProps) {
         </div>
       </div>
       <PropertyValues values={values} onChange={onChangeValues} />
-      {hasDivider && <Divider />}
+      <Divider />
     </div>
   );
 };

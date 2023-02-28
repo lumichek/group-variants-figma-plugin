@@ -1,5 +1,4 @@
-import { COLUMNS_GAP_FIELD } from './../../../common/constants';
-import { ROWS_GAP_FIELD } from "../../../common/constants";
+import { ROWS_GAP_FIELD, COLUMNS_GAP_FIELD } from "../../../common/constants";
 import {
   SortDirections,
   TBorders,
@@ -7,7 +6,7 @@ import {
   TGaps,
   TPropertiesMap
 } from "../../../common/types";
-import { collectProperties, compareProperties, fillDirections, findNextVariant } from "./utils";
+import { collectProperties, compareProperties, fillDirections, findColumnGap, findNextVariant, findRowGap } from "./utils";
 
 export function sortProperties(variants: ComponentNode[], properties: TPropertiesMap) {
   let sortDirections: TDirections = {};
@@ -58,15 +57,13 @@ export function sortProperties(variants: ComponentNode[], properties: TPropertie
 
     for (const rowProperty of rowsProperties) {
       if (!gaps[rowProperty]) {
-        gaps[rowProperty] =
-          currentRowVariant.y - prevRowVariant.y - prevRowVariant.height;
+        gaps[rowProperty] = findRowGap(prevRowVariant, currentRowVariant, variants);
       }
     }
 
     for (const columnProperty of columnProperties) {
       if (!gaps[columnProperty]) {
-        gaps[columnProperty] =
-          currentColumnVariant.x - prevColumnVariant.x - prevColumnVariant.width;
+        gaps[columnProperty] = findColumnGap(prevColumnVariant, currentColumnVariant, variants);
       }
     }
 

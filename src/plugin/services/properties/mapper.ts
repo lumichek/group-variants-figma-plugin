@@ -12,10 +12,6 @@ export function mapProperties(rawProperties: ComponentPropertyDefinitions): TPro
 }
 
 export function mapPropertiesToList(rawProperties: ComponentPropertyDefinitions): TPropertiesList {
-  console.log(Object.keys(rawProperties));
-  for (const key in rawProperties) {
-    console.log(key);
-  }
   return Object.keys(rawProperties).reduce((acc, propertyKey) => {
     if (rawProperties[propertyKey].type === PROPERTY_VARIANT_TYPE) {
       acc.push({
