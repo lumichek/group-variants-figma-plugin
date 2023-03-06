@@ -4,11 +4,13 @@ import {
   TBorders,
   TDirections,
   TGaps,
-  TPropertiesMap
+  TVariants,
+  TPropertiesMap,
+  TPropertiesValuesOrders
 } from "../../../common/types";
 import { collectProperties, compareProperties, fillDirections, findColumnGap, findNextVariant, findRowGap } from "./utils";
 
-export function sortProperties(variants: ComponentNode[], properties: TPropertiesMap) {
+export function sortProperties(variants: TVariants, properties: TPropertiesMap) {
   let sortDirections: TDirections = {};
   const borders: TBorders = {
     xFrom: 0,
@@ -18,42 +20,116 @@ export function sortProperties(variants: ComponentNode[], properties: TPropertie
   };
   const next = findNextVariant(variants);
 
-  const root = next(borders);
+  const rootColumns = next({
+    xFrom: 0,
+    yFrom: 0,
+    xBefore: Number.MAX_SAFE_INTEGER,
+    yBefore: Number.MAX_SAFE_INTEGER,
+    xMin: true
+  });
+  const prevRootColumns = next({
+    xFrom: 0,
+    yFrom: 0,
+    xBefore: Number.MAX_SAFE_INTEGER,
+    yBefore: rootColumns.y - 1,
+    xMin: true,
+    yMax: true
+  });
+  const columnsBordersYFrom = prevRootColumns ? (prevRootColumns.y + prevRootColumns.height) : 0;
+  const rootRows = next({
+    xFrom: 0,
+    yFrom: 0,
+    xBefore: Number.MAX_SAFE_INTEGER,
+    yBefore: Number.MAX_SAFE_INTEGER,
+    yMin: true
+  });
+  const prevRootRows = next({
+    xFrom: 0,
+    yFrom: 0,
+    xBefore: rootRows.x - 1,
+    yBefore: Number.MAX_SAFE_INTEGER,
+    yMin: true,
+    xMax: true
+  });
+  const rowsBordersXFrom = prevRootRows ? (prevRootRows.x + prevRootRows.width) : 0;
   const gaps: TGaps = {
-    [ROWS_GAP_FIELD]: root.x,
-    [COLUMNS_GAP_FIELD]: root.y
+    [ROWS_GAP_FIELD]: rootRows.x,
+    [COLUMNS_GAP_FIELD]: rootColumns.y
   };
-  const {height, width} = root;
 
   let currentColumnBorders = borders;
-  let currentColumnVariant = root;
+  let currentColumnVariant = rootColumns;
 
   let currentRowBorders = borders;
-  let currentRowVariant = root;
+  let currentRowVariant = rootRows;
 
-  let prevColumnVariant = root;
-  let prevRowVariant = root;
+  let prevColumnVariant = rootColumns;
+  let prevRowVariant = rootRows;
+
+  let valuesOrders: TPropertiesValuesOrders = {};
 
   while (currentColumnVariant || currentRowVariant) {
     currentColumnBorders = {
       ...currentColumnBorders,
-      xFrom: currentColumnBorders.xFrom + width,
-      yBefore: root.y + height
+      xMin: true,
+      yFrom: columnsBordersYFrom,
+      xFrom: (currentColumnVariant?.x || 0) + (currentColumnVariant?.width || 0)
     };
     currentRowBorders = {
       ...currentRowBorders,
-      yFrom: currentRowBorders.yFrom + height,
-      xBefore: root.x + width
+      yMin: true,
+      xFrom: rowsBordersXFrom,
+      yFrom: (currentRowVariant?.y || 0) + (currentRowVariant?.height || 0)
     };
     const comparator = compareProperties(properties);
-    const columnProperties = collectProperties(comparator, root, currentColumnVariant);
-    const rowsProperties = collectProperties(comparator, root, currentRowVariant);
+    const {
+      keys: columnProperties,
+      values: columnPropertiesValues,
+    } = collectProperties(comparator, rootColumns, currentColumnVariant);
+    const {
+      keys: rowsProperties,
+      values: rowPropertiesValues,
+    } = collectProperties(comparator, rootRows, currentRowVariant);
 
     sortDirections = {
       ...fillDirections(rowsProperties, SortDirections.ROWS),
       ...fillDirections(columnProperties, SortDirections.COLUMNS),
       ...sortDirections,
     };
+
+    for (const propertyKey of rowsProperties) {
+      if (!rowPropertiesValues[propertyKey]?.length ||
+        sortDirections[propertyKey] === SortDirections.COLUMNS
+      ) {
+        continue;
+      }
+      if (!valuesOrders[propertyKey]) {
+        valuesOrders[propertyKey] = rowPropertiesValues[propertyKey] || [];
+      } else {
+        rowPropertiesValues[propertyKey].forEach((val) => {
+          if (!valuesOrders[propertyKey].includes(val)) {
+            valuesOrders[propertyKey].push(val);
+          }
+        })
+      }
+    }
+
+    for (const propertyKey of columnProperties) {
+      if (!columnPropertiesValues[propertyKey]?.length ||
+        sortDirections[propertyKey] === SortDirections.ROWS
+      ) {
+        continue;
+      }
+      if (!valuesOrders[propertyKey]) {
+        valuesOrders[propertyKey] = columnPropertiesValues[propertyKey] || [];
+      } else {
+        columnPropertiesValues[propertyKey].forEach((val) => {
+          if (!valuesOrders[propertyKey].includes(val)) {
+            valuesOrders[propertyKey].push(val);
+          }
+        })
+      }
+    }
 
     for (const rowProperty of rowsProperties) {
       if (!gaps[rowProperty]) {
@@ -70,6 +146,18 @@ export function sortProperties(variants: ComponentNode[], properties: TPropertie
     prevColumnVariant = currentColumnVariant;
     prevRowVariant = currentRowVariant;
 
+    if (currentColumnVariant?.x < gaps[ROWS_GAP_FIELD]) {
+      gaps[ROWS_GAP_FIELD] = currentColumnVariant.x;
+    }
+    if (currentRowVariant?.x < gaps[ROWS_GAP_FIELD]) {
+      gaps[ROWS_GAP_FIELD] = currentRowVariant.x;
+    }
+    if (currentColumnVariant?.y < gaps[COLUMNS_GAP_FIELD]) {
+      gaps[COLUMNS_GAP_FIELD] = currentColumnVariant.y;
+    }
+    if (currentRowVariant?.y < gaps[COLUMNS_GAP_FIELD]) {
+      gaps[COLUMNS_GAP_FIELD] = currentRowVariant.y;
+    }
     currentColumnVariant = currentColumnVariant && next(currentColumnBorders);
     currentRowVariant = currentRowVariant && next(currentRowBorders);
   }
@@ -81,6 +169,7 @@ export function sortProperties(variants: ComponentNode[], properties: TPropertie
   }
 
   return {
+    valuesOrders,
     directions: sortDirections,
     gaps
   };

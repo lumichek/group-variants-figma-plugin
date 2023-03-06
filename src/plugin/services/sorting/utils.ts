@@ -1,4 +1,3 @@
-import { COLUMNS_GAP_FIELD, ROWS_GAP_FIELD } from '../../../common/constants';
 import {
   TBorders,
   SortDirections,
@@ -6,18 +5,17 @@ import {
   TDirections,
   TPropertiesValues,
   TVariant,
-  TGaps,
-  Size
+  TVariants,
+  TPropertiesValuesList
 } from './../../../common/types';
 
-export function findRowGap(prevVariant: ComponentNode, variant: ComponentNode, variants: ComponentNode[]) {
+export function findRowGap(prevVariant: TVariant, variant: TVariant, variants: TVariants) {
   let gap = variant.y - prevVariant.y - prevVariant.height;
-
   let borders: TBorders = {
     xFrom: 0,
     yFrom: prevVariant.y,
     xBefore: Number.MAX_SAFE_INTEGER,
-    yBefore: variant.y - gap
+    yBefore: variant.y - 1
   };
   const next = findNextVariant(variants);
 
@@ -40,16 +38,16 @@ export function findRowGap(prevVariant: ComponentNode, variant: ComponentNode, v
     root = next(borders);
   }
 
-  return gap;
+  return gap < 0 ? 0 : gap;
 }
 
-export function findColumnGap(prevVariant: ComponentNode, variant: ComponentNode, variants: ComponentNode[]) {
+export function findColumnGap(prevVariant: TVariant, variant: TVariant, variants: TVariants) {
   let gap = variant.x - prevVariant.x - prevVariant.width;
 
   let borders: TBorders = {
     xFrom: prevVariant.x,
     yFrom: 0,
-    xBefore: variant.x - gap,
+    xBefore: variant.x - 1,
     yBefore: Number.MAX_SAFE_INTEGER
   };
   const next = findNextVariant(variants);
@@ -73,29 +71,55 @@ export function findColumnGap(prevVariant: ComponentNode, variant: ComponentNode
     root = next(borders);
   }
 
-  return gap;
+  return gap < 0 ? 0 : gap;
 }
 
-export function findNextVariant(variants: ComponentNode[]) {
-  return function(borders: TBorders): ComponentNode {
-    const {xFrom, yFrom, xBefore, yBefore} = borders;
+export function findNextVariant(variants: TVariants) {
+  return function(borders: TBorders): TVariant {
+    const {
+      xFrom,
+      yFrom,
+      xBefore,
+      yBefore,
+      yMax,
+      yMin,
+      xMax,
+      xMin
+    } = borders;
 
-    let result: ComponentNode = null;
-    let xMin = Number.MAX_SAFE_INTEGER;
-    let yMin = Number.MAX_SAFE_INTEGER;
+    let result: TVariant = null;
+    let xMinValue = Number.MAX_SAFE_INTEGER;
+    let yMinValue = Number.MAX_SAFE_INTEGER;
 
     for (const variant of variants) {
+      // check borders
       if (
         variant.x >= xFrom &&
         variant.y >= yFrom &&
         variant.x <= xBefore &&
-        variant.y <= yBefore &&
-        variant.x <= xMin &&
-        variant.y <= yMin
+        variant.y <= yBefore
       ) {
-        result = variant;
-        xMin = variant.x;
-        yMin = variant.y;
+        let isFound = false;
+
+        if (xMin && yMin && (variant.x + variant.y) < (xMinValue + yMinValue)) {
+          isFound = true;
+        } else if (xMin && yMax && (variant.x < xMinValue || variant.x === xMinValue && variant.y >= yMinValue)) {
+          isFound = true;
+        } else if (yMin && xMax && (variant.y < yMinValue || variant.y === yMinValue && variant.x >= xMinValue)) {
+          isFound = true;
+        } else if (xMin && (variant.x < xMinValue || variant.x === xMinValue && variant.y < yMinValue)) {
+          isFound = true;
+        } else if (yMin && (variant.y < yMinValue || variant.y === yMinValue && variant.x < xMinValue)) {
+          isFound = true;
+        } else if (variant.x <= xMinValue && variant.y <= yMinValue) {
+          isFound = true;
+        }
+
+        if (isFound) {
+          result = variant;
+          xMinValue = variant.x;
+          yMinValue = variant.y;
+        }
       }
     }
 
@@ -107,27 +131,36 @@ export function compareProperties(properties: TPropertiesMap) {
   return function(
     rootPropertiesValues: TPropertiesValues,
     currentPropertiesValues: TPropertiesValues | undefined
-  ) {
+  ): {keys: string[]; values: Record<string, string[]>} {
     if (!currentPropertiesValues) {
-      return [];
+      return {keys: [], values: {}};
     }
 
     const keys: string[] = [];
+    const values: Record<string, string[]> = {};
 
     for(const key of Object.keys(properties)) {
       if (rootPropertiesValues[key] !== currentPropertiesValues[key]) {
         keys.push(key);
+
+        if (!values[key]) {
+          values[key] = [rootPropertiesValues[key]];
+        }
+        values[key].push(currentPropertiesValues[key]);
       }
     }
 
-    return keys;
+    return {keys, values};
   }
 }
 
 export function collectProperties(
-  compareFn: (a: TPropertiesValues, b: TPropertiesValues) => string[],
-  root: ComponentNode,
-  variant: ComponentNode | null
+  compareFn: (a: TPropertiesValues, b: TPropertiesValues) => {
+    keys: string[];
+    values: Record<string, string[]>
+  },
+  root: TVariant,
+  variant: TVariant | null
 ) {
   return compareFn(root.variantProperties, variant?.variantProperties);
 }
@@ -142,82 +175,45 @@ export function fillDirections(
   }, {});
 }
 
-export function findVariantByIndex(variants: TVariant[], rowIndex: number, columnIndex: number) {
-  return variants.find(({rowIndex: variantRowIndex, columnIndex: variantColumnIndex}) =>
-    variantRowIndex === rowIndex && variantColumnIndex === columnIndex)
+export function findVariantByPropertyValue(
+  variants: TVariants,
+  propertiesValues: TPropertiesValuesList
+): TVariant | undefined {
+  for (const variant of variants) {
+    let isMatched = true;
+
+    for (const {key, value} of propertiesValues) {
+      if (variant.variantProperties[key] !== value) {
+        isMatched = false;
+      }
+    }
+
+    if (isMatched) {
+      return variant;
+    }
+  }
+
+  return undefined;
 }
 
-export function moveVariants(variants: TVariant[], gaps: TGaps): Size {
-  let rowIndex = 1;
-  let columnIndex = 1;
+export function findAllVariantsByPropertyValue(
+  variants: TVariants,
+  propertiesValues: TPropertiesValuesList
+): TVariants {
+  const foundVariants = [];
 
-  const root = findVariantByIndex(variants, rowIndex, columnIndex);
+  for (const variant of variants) {
+    let isMatched = true;
 
-  let currentVariant = root;
-
-  let rowsHeight = 0;
-  let columnsWidth = 0;
-
-  let maxRowHeight = 0;
-  let maxColumnWidth = 0;
-
-  let rowsHeightAcc = gaps[COLUMNS_GAP_FIELD];
-  let columnsWidthAcc = gaps[ROWS_GAP_FIELD];
-
-  // Calculate only y coordinate
-  while (currentVariant) {
-    const {variant: node, rowGap} = currentVariant;
-
-    if (node.height > maxRowHeight) {
-      maxRowHeight = node.height;
+    for (const {key, value} of propertiesValues) {
+      if (variant.variantProperties[key] !== value) {
+        isMatched = false;
+      }
     }
-
-    node.y = rowsHeightAcc + rowGap;
-
-    currentVariant = findVariantByIndex(variants, rowIndex, columnIndex + 1);
-
-    if (!currentVariant) {
-      rowIndex++;
-      columnIndex = 1;
-      rowsHeightAcc += maxRowHeight;
-      maxRowHeight = 0;
-      rowsHeight = rowsHeightAcc + rowGap;
-      currentVariant = findVariantByIndex(variants, rowIndex, columnIndex);
-    } else {
-      columnIndex++;
+    if (isMatched) {
+      foundVariants.push(variant);
     }
   }
 
-  rowIndex = 1;
-  columnIndex = 1;
-  currentVariant = root;
-
-  // Calculate only x coordinate
-  while (currentVariant) {
-    const {variant: node, columnGap} = currentVariant;
-
-    if (node.width > maxColumnWidth) {
-      maxColumnWidth = node.width;
-    }
-
-    node.x = columnsWidthAcc + columnGap;
-
-    currentVariant = findVariantByIndex(variants, rowIndex + 1, columnIndex);
-
-    if (!currentVariant) {
-      columnIndex++;
-      rowIndex = 1;
-      columnsWidthAcc += maxColumnWidth;
-      maxColumnWidth = 0;
-      columnsWidth = columnsWidthAcc + columnGap;
-      currentVariant = findVariantByIndex(variants, rowIndex, columnIndex);
-    } else {
-      rowIndex++;
-    }
-  }
-
-  return {
-    width: columnsWidth + gaps[ROWS_GAP_FIELD],
-    height: rowsHeight + gaps[COLUMNS_GAP_FIELD]
-  };
+  return foundVariants;
 }

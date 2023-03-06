@@ -26,19 +26,20 @@ export type TPropertiesValues = {
   [key: keyof TPropertiesMap]: string;
 };
 
-export type TVariant = {
-  variant: ComponentNode;
-  columnIndex: number;
-  rowIndex: number;
-  columnGap: number;
-  rowGap: number;
-};
+export type TPropertiesValuesList = Array<{
+  key: string;
+  value: string;
+}>;
 
 export type TBorders = {
-  xFrom: number,
-  yFrom: number,
-  xBefore: number,
-  yBefore: number
+  xFrom: number;
+  yFrom: number;
+  xBefore: number;
+  yBefore: number;
+  yMax?: boolean;
+  yMin?: boolean;
+  xMax?: boolean;
+  xMin?: boolean;
 };
 
 export type TDirections = {
@@ -58,3 +59,11 @@ export type TOptions = {
   directions: TDirections;
   gaps?: TGaps;
 };
+
+export type TVariant = ComponentNode;
+export type TVariants = ComponentNode[];
+export type TVariantsParent = ComponentSetNode;
+
+export type TPropertiesValuesOrders = {
+  [key: string]: string[];
+}

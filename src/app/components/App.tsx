@@ -6,9 +6,10 @@ import {
   MESSAGE_CHANGE_PROPERTIES,
   MESSAGE_COMPONENT_NOT_SELECTED,
   MESSAGE_COMPONENT_SELECTED,
+  MESSAGE_ERROR,
   MESSAGE_GET_DIRECTIONS,
   MESSAGE_GET_GAPS,
-  MESSAGE_GET_PROPERTIES
+  MESSAGE_GET_PROPERTIES_WITH_VALUES
 } from '../../common/constants';
 import {
   SortDirections,
@@ -19,6 +20,7 @@ import {
 
 export default function App() {
   const [isSelected, setIsSelected] = React.useState(false);
+  const [hasErrors, setHasErrors] = React.useState(false);
   const [properties, setProperties] = React.useState<TPropertiesList>([]);
   const [directions, setDirections] = React.useState<TDirections>({});
   const [gaps, setGaps] = React.useState<TGaps>({});
@@ -26,9 +28,10 @@ export default function App() {
   const postMessage = useMessage({
     [MESSAGE_COMPONENT_NOT_SELECTED]: setIsSelected,
     [MESSAGE_COMPONENT_SELECTED]: setIsSelected,
-    [MESSAGE_GET_PROPERTIES]: setProperties,
+    [MESSAGE_GET_PROPERTIES_WITH_VALUES]: setProperties,
     [MESSAGE_GET_DIRECTIONS]: setDirections,
-    [MESSAGE_GET_GAPS]: setGaps
+    [MESSAGE_GET_GAPS]: setGaps,
+    [MESSAGE_ERROR]: setHasErrors
   });
   const onPropertyChangeHandler = (
     propertyKey: string,
@@ -66,7 +69,7 @@ export default function App() {
   };
 
   const isReady = isSelected &&
-    Object.keys(gaps).length > 0 &&
+    Object.keys(directions).length > 0 &&
     Object.keys(gaps).length > 0 &&
     properties.length > 0;
 
@@ -89,6 +92,9 @@ export default function App() {
           {'Select a component with a set of at least two variants'}
         </div>
       )}
+      {
+        hasErrors && 'Something went wrong, please reload the plugin or check your component'
+      }
     </div>
   );
 }

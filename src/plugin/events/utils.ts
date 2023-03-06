@@ -1,4 +1,4 @@
-import { PropertiesListType, PropertiesMapType } from '../../common/types';
+import { PropertiesListType, PropertiesMapType, TVariantsParent, TVariants } from '../../common/types';
 import { fetchProperties, sortProperties } from '../propertiesController';
 import { COMPONENT_SET_TYPE } from './../../common/constants';
 
@@ -22,11 +22,11 @@ export function checkSelection(page: PageNode) {
   return true;
 }
 
-export function getPropertiesInfo(componentSet: ComponentSetNode, variants: ComponentNode[]) {
+export function getPropertiesInfo(componentSet: TVariantsParent, variants: TVariants) {
   const [root] = variants;
   const propertiesList = fetchProperties(componentSet, PropertiesListType);
   const propertiesMap = fetchProperties(componentSet, PropertiesMapType);
-  const {directions, gaps} = sortProperties(variants, propertiesMap);
+  const {directions, gaps, valuesOrders} = sortProperties(variants, propertiesMap);
   const {name: propertiesString} = root;
   const propertiesOrders = propertiesString.split(', ');
 
@@ -45,6 +45,7 @@ export function getPropertiesInfo(componentSet: ComponentSetNode, variants: Comp
   return {
     properties: propertiesListSorted,
     directions,
-    gaps
+    gaps,
+    valuesOrders
   };
 }

@@ -1,5 +1,6 @@
-import { TDirections, TGaps, TPropertiesList } from "../../common/types";
-import { sortVariants, moveVariants } from "../variantsController";
+import { MESSAGE_ERROR } from "../../common/constants";
+import { TDirections, TGaps, TPropertiesList, TVariants, TVariantsParent } from "../../common/types";
+import { sortVariants } from "../variantsController";
 import { checkSelection } from "./utils";
 
 export function onSortMessage(
@@ -15,12 +16,18 @@ export function onSortMessage(
   }
 
   const {selection: [selectedNode]} = figma.currentPage;
-  const variantsParent = (selectedNode as ComponentSetNode);
-  const variants = variantsParent.children as ComponentNode[];
+  const variantsParent = (selectedNode as TVariantsParent);
+  const variants = variantsParent.children as TVariants;
 
-  const sortedVariants = sortVariants(variants, properties, {directions, gaps});
+  try {
+    sortVariants(variantsParent, variants, properties, {directions, gaps});
 
-  const parentSize = moveVariants(sortedVariants, gaps);
+    return null;
+  } catch (error) {
+    return {
+      type: MESSAGE_ERROR,
+      payload: true
+    };
+  }
 
-  variantsParent.resizeWithoutConstraints(parentSize.width, parentSize.height);
 }

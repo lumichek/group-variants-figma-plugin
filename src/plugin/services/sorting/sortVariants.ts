@@ -1,63 +1,149 @@
+import { COLUMNS_GAP_FIELD, ROWS_GAP_FIELD } from "../../../common/constants";
 import {
   SortDirections,
   TOptions,
   TPropertiesList,
-  TVariant
+  TVariants,
+  TVariantsParent
 } from "../../../common/types";
+import { findAllVariantsByPropertyValue, findVariantByPropertyValue } from "./utils";
 
 export function sortVariants(
-  variants: ComponentNode[],
-  properties: TPropertiesList,
-  options: TOptions
-): TVariant[] {
+  parentVariant: TVariantsParent, variants: TVariants, properties: TPropertiesList, options: TOptions
+): void {
   const {directions, gaps} = options;
-  const sortedVariants: TVariant[] = [];
   const reversedProperties = properties.reverse();
 
-  for(const variant of variants) {
-    let rowIndex = 0;
-    let columnIndex = 0;
-    let rowStartIndex = 0;
-    let columnStartIndex = 0;
-    let rowPropertyValuesLength = 0;
-    let columnPropertyValuesLength = 0;
+  let rows = [];
+  let rowsGaps = [];
+  let columns = [];
+  let columnsGaps = [];
 
-    let columnGap = 0;
-    let rowGap = 0;
-    let rowGaps = 0;
-    let columnGaps = 0;
+  for (let propertyIndex = 0; propertyIndex < reversedProperties.length; propertyIndex++) {
+    const {key: propertyKey, values: propertyValues} = properties[propertyIndex];
 
-    const {variantProperties: variantPropertiesValues} = variant;
-
-    for(const property of reversedProperties) {
-      const {key: propertyKey, values: propertyValues} = property;
-      const propertyIndex = propertyValues.indexOf(variantPropertiesValues[propertyKey]) + 1;
-
-      if (directions[propertyKey] === SortDirections.COLUMNS) {
-        columnStartIndex = (propertyIndex - 1) * columnPropertyValuesLength;
-        columnIndex += columnStartIndex + (columnPropertyValuesLength === 0 ? propertyIndex : 0);
-        columnPropertyValuesLength = (columnPropertyValuesLength || 1) * propertyValues.length;
-
-        columnGap += (propertyIndex - 1) * columnGaps + gaps[propertyKey] * (propertyIndex - 1);
-        columnGaps = columnGaps * propertyValues.length + (propertyValues.length - 1) * gaps[propertyKey];
+    if (directions[propertyKey] === SortDirections.ROWS) {
+      if (rows.length === 0) {
+        rows = propertyValues.map((propertyValue) => ([{
+          key: propertyKey,
+          value: propertyValue
+        }]));
+        rowsGaps = propertyValues.map(() => gaps[propertyKey]);
       } else {
-        rowStartIndex = (propertyIndex - 1) * rowPropertyValuesLength;
-        rowIndex += rowStartIndex + (rowPropertyValuesLength === 0 ? propertyIndex : 0);
-        rowPropertyValuesLength = (rowPropertyValuesLength || 1) * propertyValues.length;
+        const nestedPropertyValues = rows;
+        const nestedPropertyGaps = rowsGaps;
+        rows = [];
+        rowsGaps = [];
 
-        rowGap += (propertyIndex - 1) * rowGaps + gaps[propertyKey] * (propertyIndex - 1);
-        rowGaps = rowGaps * propertyValues.length + (propertyValues.length - 1) * gaps[propertyKey];
+        for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
+          for (let nestedIndex = 0; nestedIndex < nestedPropertyValues.length; nestedIndex++) {
+            rows.push([{
+              key: propertyKey,
+              value: propertyValues[valueIndex]
+            }, ...nestedPropertyValues[nestedIndex]]);
+            if (nestedIndex === nestedPropertyValues.length - 1) {
+              rowsGaps.push(gaps[propertyKey]);
+            } else {
+              rowsGaps.push(nestedPropertyGaps[nestedIndex]);
+            }
+          }
+        }
+      }
+    } else if (directions[propertyKey] === SortDirections.COLUMNS) {
+      if (columns.length === 0) {
+        columns = propertyValues.map((propertyValue) => [{
+          key: propertyKey,
+          value: propertyValue
+        }]);
+        columnsGaps = propertyValues.map(() => gaps[propertyKey]);
+      } else {
+        const nestedPropertyValues = columns;
+        const nestedPropertyGaps = columnsGaps;
+        columns = [];
+        columnsGaps = [];
+
+        for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
+          for (let nestedIndex = 0; nestedIndex < nestedPropertyValues.length; nestedIndex++) {
+            columns.push([{
+              key: propertyKey,
+              value: propertyValues[valueIndex]
+            }, ...nestedPropertyValues[nestedIndex]]);
+            if (nestedIndex === nestedPropertyValues.length - 1) {
+              columnsGaps.push(gaps[propertyKey]);
+            } else {
+              columnsGaps.push(nestedPropertyGaps[nestedIndex]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const columnsVariants = [];
+
+  for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+    const column = columns[columnIndex];
+    const columnVariants = findAllVariantsByPropertyValue(variants, column);
+    let maxColumnWidth = 0;
+
+    for (const variant of columnVariants) {
+      if (variant.width > maxColumnWidth) {
+        maxColumnWidth = variant.width;
       }
     }
 
-    sortedVariants.push({
-      variant,
-      columnIndex: columnIndex || 1,
-      rowIndex: rowIndex || 1,
-      rowGap: rowGap || 0,
-      columnGap: columnGap || 0
+    columnsVariants.push({
+      variants: columnVariants,
+      maxColumnWidth
     });
   }
 
-  return sortedVariants;
+  let xCoord = gaps[ROWS_GAP_FIELD];
+  let yCoord = gaps[COLUMNS_GAP_FIELD];
+
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    let maxRowHeight = 0;
+    let isEmptyRow = true;
+
+    xCoord = gaps[ROWS_GAP_FIELD];
+
+    for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+      const row = rows[rowIndex];
+      const columnVariants = columnsVariants[columnIndex];
+
+      if (columnVariants.variants.length > 0) {
+        const variant = findVariantByPropertyValue(columnVariants.variants, row);
+
+        if (variant) {
+          isEmptyRow = false;
+
+          if (variant.height > maxRowHeight) {
+            maxRowHeight = variant.height;
+          }
+
+          variant.x = xCoord;
+          variant.y = yCoord;
+        }
+
+        xCoord += columnVariants.maxColumnWidth;
+
+        if (columnIndex !== columns.length - 1) {
+          xCoord += columnsGaps[columnIndex];
+        }
+      }
+    }
+
+    if (!isEmptyRow) {
+      yCoord += maxRowHeight;
+
+      if (rowIndex !== rows.length - 1) {
+        yCoord += rowsGaps[rowIndex];
+      }
+    }
+  }
+
+  parentVariant.resizeWithoutConstraints(
+    xCoord + gaps[ROWS_GAP_FIELD],
+    yCoord + gaps[COLUMNS_GAP_FIELD]
+  );
 };

@@ -10,12 +10,16 @@ figma.on('selectionchange', () => {
 
   (Array.isArray(msg) ? msg : [msg]).forEach((item) => {
     if (item.type === MESSAGE_CHANGE_PROPERTIES) {
-      onSortMessage(
+      const sortMsg = onSortMessage(
         figma.currentPage,
         item.payload.properties,
         item.payload.directions,
         item.payload.gaps
       );
+
+      if (sortMsg) {
+        figma.ui.postMessage(sortMsg);
+      }
     }
     figma.ui.postMessage(item);
   });
@@ -26,12 +30,16 @@ figma.on('run', () => {
 
   (Array.isArray(msg) ? msg : [msg]).forEach((item) => {
     if (item.type === MESSAGE_CHANGE_PROPERTIES) {
-      onSortMessage(
+      const sortMsg = onSortMessage(
         figma.currentPage,
         item.payload.properties,
         item.payload.directions,
         item.payload.gaps
       );
+
+      if (sortMsg) {
+        figma.ui.postMessage(sortMsg);
+      }
     }
     figma.ui.postMessage(item);
   });
@@ -39,11 +47,15 @@ figma.on('run', () => {
 
 figma.ui.onmessage = (msg: TMessage) => {
   if (msg.type === MESSAGE_CHANGE_PROPERTIES) {
-    onSortMessage(
+    const sortMsg = onSortMessage(
       figma.currentPage,
       msg.payload.properties,
       msg.payload.directions,
       msg.payload.gaps
     );
+
+    if (sortMsg) {
+      figma.ui.postMessage(sortMsg);
+    }
   }
 };
