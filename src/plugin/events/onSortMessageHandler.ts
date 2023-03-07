@@ -24,10 +24,11 @@ export function onSortMessage(
 
     return null;
   } catch (error) {
-    return {
-      type: MESSAGE_ERROR,
-      payload: true
-    };
+    throw new Error(error);
+    // return {
+    //   type: MESSAGE_ERROR,
+    //   payload: true
+    // };
   }
 
 }

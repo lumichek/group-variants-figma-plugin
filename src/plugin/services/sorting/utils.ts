@@ -185,6 +185,8 @@ export function findVariantByPropertyValue(
     for (const {key, value} of propertiesValues) {
       if (variant.variantProperties[key] !== value) {
         isMatched = false;
+
+        break;
       }
     }
 
@@ -208,6 +210,8 @@ export function findAllVariantsByPropertyValue(
     for (const {key, value} of propertiesValues) {
       if (variant.variantProperties[key] !== value) {
         isMatched = false;
+
+        break;
       }
     }
     if (isMatched) {

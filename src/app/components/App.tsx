@@ -93,7 +93,11 @@ export default function App() {
         </div>
       )}
       {
-        hasErrors && 'Something went wrong, please reload the plugin or check your component'
+        hasErrors && (
+          <div className={'error__block'}>
+            {'Something went wrong, please reload the plugin or check your component'}
+          </div>
+        )
       }
     </div>
   );

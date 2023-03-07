@@ -72,10 +72,11 @@ export function onSelectionChange(page: PageNode): TMessage | TMessage[] {
         }
       }
     ];
-  } catch (_) {
-    return {
-      type: MESSAGE_ERROR,
-      payload: true
-    };
+  } catch (err) {
+    throw new Error(err);
+    // return {
+    //   type: MESSAGE_ERROR,
+    //   payload: true
+    // };
   }
 }

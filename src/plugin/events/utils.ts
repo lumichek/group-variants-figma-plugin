@@ -26,7 +26,16 @@ export function getPropertiesInfo(componentSet: TVariantsParent, variants: TVari
   const [root] = variants;
   const propertiesList = fetchProperties(componentSet, PropertiesListType);
   const propertiesMap = fetchProperties(componentSet, PropertiesMapType);
-  const {directions, gaps, valuesOrders} = sortProperties(variants, propertiesMap);
+  const preparedVariants = variants.map((variant) => {
+    return {
+      x: variant.x,
+      y: variant.y,
+      width: variant.width,
+      height: variant.height,
+      variantProperties: {...variant.variantProperties}
+    };
+  });
+  const {directions, gaps, valuesOrders} = sortProperties(preparedVariants as TVariants, propertiesMap);
   const {name: propertiesString} = root;
   const propertiesOrders = propertiesString.split(', ');
 

@@ -37,16 +37,22 @@ export function sortVariants(
 
         for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
           for (let nestedIndex = 0; nestedIndex < nestedPropertyValues.length; nestedIndex++) {
-            rows.push([{
-              key: propertyKey,
-              value: propertyValues[valueIndex]
-            }, ...nestedPropertyValues[nestedIndex]]);
-            if (nestedIndex === nestedPropertyValues.length - 1) {
-              rowsGaps.push(gaps[propertyKey]);
-            } else {
+            const row = [
+              {
+                key: propertyKey,
+                value: propertyValues[valueIndex]
+              },
+              ...nestedPropertyValues[nestedIndex]
+            ];
+
+            const rowVariant = findVariantByPropertyValue(variants, row);
+
+            if (rowVariant) {
+              rows.push(row);
               rowsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
+          rowsGaps[rowsGaps.length - 1] = gaps[propertyKey];
         }
       }
     } else if (directions[propertyKey] === SortDirections.COLUMNS) {
@@ -64,16 +70,22 @@ export function sortVariants(
 
         for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
           for (let nestedIndex = 0; nestedIndex < nestedPropertyValues.length; nestedIndex++) {
-            columns.push([{
-              key: propertyKey,
-              value: propertyValues[valueIndex]
-            }, ...nestedPropertyValues[nestedIndex]]);
-            if (nestedIndex === nestedPropertyValues.length - 1) {
-              columnsGaps.push(gaps[propertyKey]);
-            } else {
+            const column = [
+              {
+                key: propertyKey,
+                value: propertyValues[valueIndex]
+              },
+              ...nestedPropertyValues[nestedIndex]
+            ];
+
+            const columnVariant = findVariantByPropertyValue(variants, column);
+
+            if (columnVariant) {
+              columns.push(column);
               columnsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
+          columnsGaps[columnsGaps.length - 1] = gaps[propertyKey];
         }
       }
     }
@@ -85,14 +97,27 @@ export function sortVariants(
     const column = columns[columnIndex];
     const columnVariants = findAllVariantsByPropertyValue(variants, column);
     let maxColumnWidth = 0;
+    const mapVariants = {};
 
     for (const variant of columnVariants) {
+      let variantKey = [];
+
+      for (let propertyIndex = 0; propertyIndex < properties.length; propertyIndex++) {
+        const {key: propertyKey} = properties[propertyIndex];
+        if (directions[propertyKey] === SortDirections.ROWS) {
+          variantKey.push(`${propertyKey}=${variant.variantProperties[propertyKey]}`);
+        }
+      }
+
+      mapVariants[variantKey.reverse().join(', ')] = variant;
+
       if (variant.width > maxColumnWidth) {
         maxColumnWidth = variant.width;
       }
     }
 
     columnsVariants.push({
+      mapVariants,
       variants: columnVariants,
       maxColumnWidth
     });
@@ -100,6 +125,15 @@ export function sortVariants(
 
   let xCoord = gaps[ROWS_GAP_FIELD];
   let yCoord = gaps[COLUMNS_GAP_FIELD];
+  let maxXCoord = 0;
+
+  if (rows.length === 0) {
+    rows.push(null);
+  }
+
+  if (columns.length === 0) {
+    columns.push(null);
+  }
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
     let maxRowHeight = 0;
@@ -108,11 +142,31 @@ export function sortVariants(
     xCoord = gaps[ROWS_GAP_FIELD];
 
     for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+      let columnVariants;
+      let variantKey = '';
       const row = rows[rowIndex];
-      const columnVariants = columnsVariants[columnIndex];
+      const column = columns[columnIndex];
+
+      if (row) {
+        variantKey = row.map(({key, value}) => `${key}=${value}`).join(', ');
+      }
+
+      if (!column) {
+        columnVariants = variants;
+      } else {
+        columnVariants = columnsVariants[columnIndex];
+      }
 
       if (columnVariants.variants.length > 0) {
-        const variant = findVariantByPropertyValue(columnVariants.variants, row);
+        let variant;
+
+        if (!row) {
+          variant = columnVariants.variants[0];
+        } else {
+          if (variantKey) {
+            variant = columnVariants.mapVariants[variantKey];
+          }
+        }
 
         if (variant) {
           isEmptyRow = false;
