@@ -33,7 +33,7 @@ const Input = React.forwardRef<HTMLInputElement, TInputProps>(({
         type={'number'}
         ref={ref}
         className={'input'}
-        value={value}
+        value={(Number(value) || 0).toString()}
         onChange={onChangeHandler}
       />
       {unit && (

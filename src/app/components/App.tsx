@@ -87,7 +87,7 @@ export default function App() {
           />
         ))
       }
-      {!isSelected && (
+      {!hasErrors && !isSelected && (
         <div className={'error__block'}>
           {'Select a component with a set of at least two variants'}
         </div>

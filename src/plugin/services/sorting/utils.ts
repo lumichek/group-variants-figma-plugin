@@ -175,49 +175,6 @@ export function fillDirections(
   }, {});
 }
 
-export function findVariantByPropertyValue(
-  variants: TVariants,
-  propertiesValues: TPropertiesValuesList
-): TVariant | undefined {
-  for (const variant of variants) {
-    let isMatched = true;
-
-    for (const {key, value} of propertiesValues) {
-      if (variant.variantProperties[key] !== value) {
-        isMatched = false;
-
-        break;
-      }
-    }
-
-    if (isMatched) {
-      return variant;
-    }
-  }
-
-  return undefined;
-}
-
-export function findAllVariantsByPropertyValue(
-  variants: TVariants,
-  propertiesValues: TPropertiesValuesList
-): TVariants {
-  const foundVariants = [];
-
-  for (const variant of variants) {
-    let isMatched = true;
-
-    for (const {key, value} of propertiesValues) {
-      if (variant.variantProperties[key] !== value) {
-        isMatched = false;
-
-        break;
-      }
-    }
-    if (isMatched) {
-      foundVariants.push(variant);
-    }
-  }
-
-  return foundVariants;
+export function mapPropertiesValuesToStr(propertiesValues: TPropertiesValuesList): string {
+  return propertiesValues.map(({key, value}) => `${key}=${value}`).join(', ');
 }

@@ -125,10 +125,14 @@ input::-webkit-inner-spin-button {
 .toggle__container {
   position: relative;
   display: flex;
-  border: 1px solid var(--color-bg);
+  border: 1px solid var(--white);
   border-radius: 2px;
   width: 66px;
   height: 30px;
+}
+
+.toggle__container:hover {
+  border: 1px solid var(--color-bg);
 }
 
 .toggle__input {
@@ -151,22 +155,22 @@ input::-webkit-inner-spin-button {
 }
 
 .toggle__input:checked + .toggle__container > .toggle__block:last-of-type:hover {
-  background-color: var(--white);
+  background-color: var(--color-bg);
 }
 
-.toggle__input:not(:checked) + .toggle__container > .toggle__block:first-of-type:hover {
-  background-color: var(--white);
+.toggle__input:not(:checked) + .toggle__container > .toggle__block:last-of-type:hover {
+  background-color: var(--color-bg);
 }
 
 .toggle__block:hover {
   background-color: var(--color-bg-hover);
 }
 
-.toggle__input:checked + .toggle__container {
+.toggle__input:not(checked) + .toggle__container {
   background: linear-gradient(to right, var(--color-bg) 0% 50%, var(--white) 50% 100%);
 }
 
-.toggle__input:not(checked) + .toggle__container {
+.toggle__input:checked + .toggle__container {
   background: linear-gradient(to left, var(--color-bg) 0% 50%, var(--white) 50% 100%);
 }
 

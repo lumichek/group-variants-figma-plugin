@@ -23,12 +23,11 @@ export function onSortMessage(
     sortVariants(variantsParent, variants, properties, {directions, gaps});
 
     return null;
-  } catch (error) {
-    throw new Error(error);
-    // return {
-    //   type: MESSAGE_ERROR,
-    //   payload: true
-    // };
+  } catch (_) {
+    return {
+      type: MESSAGE_ERROR,
+      payload: true
+    };
   }
 
 }

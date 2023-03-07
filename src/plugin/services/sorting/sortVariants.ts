@@ -6,7 +6,7 @@ import {
   TVariants,
   TVariantsParent
 } from "../../../common/types";
-import { findAllVariantsByPropertyValue, findVariantByPropertyValue } from "./utils";
+import { mapPropertiesValuesToStr } from "./utils";
 
 export function sortVariants(
   parentVariant: TVariantsParent, variants: TVariants, properties: TPropertiesList, options: TOptions
@@ -15,9 +15,56 @@ export function sortVariants(
   const reversedProperties = properties.reverse();
 
   let rows = [];
+  let rowsKeys = [];
   let rowsGaps = [];
   let columns = [];
+  let columnsKeys = [];
   let columnsGaps = [];
+  let variantsMap = {};
+
+  for (const variant of variants) {
+    let variantKey = [];
+    let rowVariantKey = [];
+    let columnVariantKey = [];
+
+    for (let propertyIndex = 0; propertyIndex < properties.length; propertyIndex++) {
+      const {key: propertyKey} = properties[propertyIndex];
+
+      // all props with values
+      variantKey.push(`${propertyKey}=${variant.variantProperties[propertyKey]}`);
+
+      // rows props
+      if (directions[propertyKey] === SortDirections.ROWS) {
+        rowVariantKey.push(`${propertyKey}=${variant.variantProperties[propertyKey]}`);
+
+        const rowVariantKeyStr = [...rowVariantKey].reverse().join(', ');
+
+        if (!variantsMap[rowVariantKeyStr]) {
+          variantsMap[rowVariantKeyStr] = [];
+        }
+        variantsMap[rowVariantKeyStr].push(variant);
+      }
+
+      // columns props
+      if (directions[propertyKey] === SortDirections.COLUMNS) {
+        columnVariantKey.push(`${propertyKey}=${variant.variantProperties[propertyKey]}`);
+
+        const columnVariantKeyStr = [...columnVariantKey].reverse().join(', ');
+
+        if (!variantsMap[columnVariantKeyStr]) {
+          variantsMap[columnVariantKeyStr] = [];
+        }
+        variantsMap[columnVariantKeyStr].push(variant);
+      }
+    }
+
+    const rowVariantKeyStr = [...rowVariantKey].reverse().join(', ');
+    const columnVariantKeyStr = [...columnVariantKey].reverse().join(', ');
+
+    variantsMap[[rowVariantKeyStr, columnVariantKeyStr].join(', ')] = [variant];
+
+    variantsMap[variantKey.reverse().join(', ')] = [variant];
+  }
 
   for (let propertyIndex = 0; propertyIndex < reversedProperties.length; propertyIndex++) {
     const {key: propertyKey, values: propertyValues} = properties[propertyIndex];
@@ -29,10 +76,12 @@ export function sortVariants(
           value: propertyValue
         }]));
         rowsGaps = propertyValues.map(() => gaps[propertyKey]);
+        rowsKeys = rows.map(mapPropertiesValuesToStr);
       } else {
         const nestedPropertyValues = rows;
         const nestedPropertyGaps = rowsGaps;
         rows = [];
+        rowsKeys = [];
         rowsGaps = [];
 
         for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
@@ -44,11 +93,11 @@ export function sortVariants(
               },
               ...nestedPropertyValues[nestedIndex]
             ];
+            const rowKey = mapPropertiesValuesToStr(row);
 
-            const rowVariant = findVariantByPropertyValue(variants, row);
-
-            if (rowVariant) {
+            if (variantsMap[rowKey]) {
               rows.push(row);
+              rowsKeys.push(rowKey);
               rowsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
@@ -62,10 +111,12 @@ export function sortVariants(
           value: propertyValue
         }]);
         columnsGaps = propertyValues.map(() => gaps[propertyKey]);
+        columnsKeys = columns.map(mapPropertiesValuesToStr);
       } else {
         const nestedPropertyValues = columns;
         const nestedPropertyGaps = columnsGaps;
         columns = [];
+        columnsKeys = [];
         columnsGaps = [];
 
         for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
@@ -77,11 +128,11 @@ export function sortVariants(
               },
               ...nestedPropertyValues[nestedIndex]
             ];
+            const columnKey = mapPropertiesValuesToStr(column);
 
-            const columnVariant = findVariantByPropertyValue(variants, column);
-
-            if (columnVariant) {
+            if (variantsMap[columnKey]) {
               columns.push(column);
+              columnsKeys.push(columnKey);
               columnsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
@@ -91,41 +142,23 @@ export function sortVariants(
     }
   }
 
-  const columnsVariants = [];
+  const columnsMaxWidths = [];
 
   for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-    const column = columns[columnIndex];
-    const columnVariants = findAllVariantsByPropertyValue(variants, column);
+    const columnVariants = variantsMap[columnsKeys[columnIndex]];
     let maxColumnWidth = 0;
-    const mapVariants = {};
 
     for (const variant of columnVariants) {
-      let variantKey = [];
-
-      for (let propertyIndex = 0; propertyIndex < properties.length; propertyIndex++) {
-        const {key: propertyKey} = properties[propertyIndex];
-        if (directions[propertyKey] === SortDirections.ROWS) {
-          variantKey.push(`${propertyKey}=${variant.variantProperties[propertyKey]}`);
-        }
-      }
-
-      mapVariants[variantKey.reverse().join(', ')] = variant;
-
       if (variant.width > maxColumnWidth) {
         maxColumnWidth = variant.width;
       }
     }
 
-    columnsVariants.push({
-      mapVariants,
-      variants: columnVariants,
-      maxColumnWidth
-    });
+    columnsMaxWidths[columnIndex] = maxColumnWidth;
   }
 
   let xCoord = gaps[ROWS_GAP_FIELD];
   let yCoord = gaps[COLUMNS_GAP_FIELD];
-  let maxXCoord = 0;
 
   if (rows.length === 0) {
     rows.push(null);
@@ -137,53 +170,38 @@ export function sortVariants(
 
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
     let maxRowHeight = 0;
+    let maxColumnWidth = 0;
     let isEmptyRow = true;
 
     xCoord = gaps[ROWS_GAP_FIELD];
 
     for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-      let columnVariants;
-      let variantKey = '';
       const row = rows[rowIndex];
       const column = columns[columnIndex];
+      const variantKey = mapPropertiesValuesToStr([...(row || []), ...(column || [])]);
+      const [variant] = variantsMap[variantKey] || [];
 
-      if (row) {
-        variantKey = row.map(({key, value}) => `${key}=${value}`).join(', ');
+      if (variant) {
+        isEmptyRow = false;
+
+        if (variant.height > maxRowHeight) {
+          maxRowHeight = variant.height;
+        }
+
+        variant.x = xCoord;
+        variant.y = yCoord;
       }
 
-      if (!column) {
-        columnVariants = variants;
+      if (columnsMaxWidths[columnIndex]) {
+        xCoord += columnsMaxWidths[columnIndex];
       } else {
-        columnVariants = columnsVariants[columnIndex];
+        if (variant?.width > maxColumnWidth) {
+          maxColumnWidth = variant?.width;
+        }
       }
 
-      if (columnVariants.variants.length > 0) {
-        let variant;
-
-        if (!row) {
-          variant = columnVariants.variants[0];
-        } else {
-          if (variantKey) {
-            variant = columnVariants.mapVariants[variantKey];
-          }
-        }
-
-        if (variant) {
-          isEmptyRow = false;
-
-          if (variant.height > maxRowHeight) {
-            maxRowHeight = variant.height;
-          }
-
-          variant.x = xCoord;
-          variant.y = yCoord;
-        }
-
-        xCoord += columnVariants.maxColumnWidth;
-
-        if (columnIndex !== columns.length - 1) {
-          xCoord += columnsGaps[columnIndex];
-        }
+      if (columnIndex !== columns.length - 1) {
+        xCoord += columnsGaps[columnIndex];
       }
     }
 
@@ -193,6 +211,10 @@ export function sortVariants(
       if (rowIndex !== rows.length - 1) {
         yCoord += rowsGaps[rowIndex];
       }
+    }
+
+    if (maxColumnWidth > 0) {
+      xCoord += maxColumnWidth;
     }
   }
 
