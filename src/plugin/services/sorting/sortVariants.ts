@@ -75,14 +75,12 @@ export function sortVariants(
           key: propertyKey,
           value: propertyValue
         }]));
-        rowsGaps = propertyValues.map(() => gaps[propertyKey]);
         rowsKeys = rows.map(mapPropertiesValuesToStr);
       } else {
         const nestedPropertyValues = rows;
-        const nestedPropertyGaps = rowsGaps;
+
         rows = [];
         rowsKeys = [];
-        rowsGaps = [];
 
         for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
           for (let nestedIndex = 0; nestedIndex < nestedPropertyValues.length; nestedIndex++) {
@@ -98,10 +96,8 @@ export function sortVariants(
             if (variantsMap[rowKey]) {
               rows.push(row);
               rowsKeys.push(rowKey);
-              rowsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
-          rowsGaps[rowsGaps.length - 1] = gaps[propertyKey];
         }
       }
     } else if (directions[propertyKey] === SortDirections.COLUMNS) {
@@ -114,10 +110,9 @@ export function sortVariants(
         columnsKeys = columns.map(mapPropertiesValuesToStr);
       } else {
         const nestedPropertyValues = columns;
-        const nestedPropertyGaps = columnsGaps;
+
         columns = [];
         columnsKeys = [];
-        columnsGaps = [];
 
         for (let valueIndex = 0; valueIndex < propertyValues.length; valueIndex++) {
           for (let nestedIndex = 0; nestedIndex < nestedPropertyValues.length; nestedIndex++) {
@@ -133,22 +128,46 @@ export function sortVariants(
             if (variantsMap[columnKey]) {
               columns.push(column);
               columnsKeys.push(columnKey);
-              columnsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
-          console.log('COL GAP',
-          gaps[propertyKey], propertyKey, propertyValues[valueIndex],
-          [...columns], [...columnsGaps],
-          [...nestedPropertyValues]);
-          columnsGaps[columnsGaps.length - 1] = gaps[propertyKey];
         }
       }
     }
   }
 
   const columnsMaxWidths = [];
+  let prevRowValues = null;
+  let prevColumnValues = null;
+
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    if (prevRowValues) {
+      for (let index = 0; index < rows[rowIndex].length; index++) {
+        const {key: rowKey, value: rowValue} = rows[rowIndex][index];
+
+        if (prevRowValues[index].key === rowKey && prevRowValues[index].value !== rowValue) {
+          rowsGaps[rowIndex - 1] = gaps[rowKey];
+          break;
+        }
+      }
+    }
+
+    prevRowValues = rows[rowIndex];
+  }
 
   for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+    if (prevColumnValues) {
+      for (let index = 0; index < columns[columnIndex].length; index++) {
+        const {key: columnKey, value: columnValue} = columns[columnIndex][index];
+
+        if (prevColumnValues[index].key === columnKey && prevColumnValues[index].value !== columnValue) {
+          columnsGaps[columnIndex - 1] = gaps[columnKey];
+          break;
+        }
+      }
+    }
+
+    prevColumnValues = columns[columnIndex];
+
     const columnVariants = variantsMap[columnsKeys[columnIndex]];
     let maxColumnWidth = 0;
 
