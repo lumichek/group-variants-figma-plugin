@@ -136,6 +136,10 @@ export function sortVariants(
               columnsGaps.push(nestedPropertyGaps[nestedIndex]);
             }
           }
+          console.log('COL GAP',
+          gaps[propertyKey], propertyKey, propertyValues[valueIndex],
+          [...columns], [...columnsGaps],
+          [...nestedPropertyValues]);
           columnsGaps[columnsGaps.length - 1] = gaps[propertyKey];
         }
       }

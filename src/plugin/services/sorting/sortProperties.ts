@@ -158,7 +158,9 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
     if (currentRowVariant?.y < gaps[COLUMNS_GAP_FIELD]) {
       gaps[COLUMNS_GAP_FIELD] = currentRowVariant.y;
     }
+    console.log('currentColumnVariant', currentColumnVariant?.x, currentColumnVariant?.y);
     currentColumnVariant = currentColumnVariant && next(currentColumnBorders);
+    // console.log('currentRowVariant', currentRowVariant?.x, currentRowVariant?.y);
     currentRowVariant = currentRowVariant && next(currentRowBorders);
   }
 
