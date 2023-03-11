@@ -10,12 +10,7 @@ figma.on('selectionchange', () => {
 
   (Array.isArray(msg) ? msg : [msg]).forEach((item) => {
     if (item.type === MESSAGE_CHANGE_PROPERTIES) {
-      const sortMsg = onSortMessage(
-        figma.currentPage,
-        item.payload.properties,
-        item.payload.directions,
-        item.payload.gaps
-      );
+      const sortMsg = onSortMessage(figma.currentPage, item.payload);
 
       if (sortMsg) {
         figma.ui.postMessage(sortMsg);
@@ -30,12 +25,7 @@ figma.on('run', () => {
 
   (Array.isArray(msg) ? msg : [msg]).forEach((item) => {
     if (item.type === MESSAGE_CHANGE_PROPERTIES) {
-      const sortMsg = onSortMessage(
-        figma.currentPage,
-        item.payload.properties,
-        item.payload.directions,
-        item.payload.gaps
-      );
+      const sortMsg = onSortMessage(figma.currentPage, item.payload);
 
       if (sortMsg) {
         figma.ui.postMessage(sortMsg);
@@ -47,12 +37,7 @@ figma.on('run', () => {
 
 figma.ui.onmessage = (msg: TMessage) => {
   if (msg.type === MESSAGE_CHANGE_PROPERTIES) {
-    const sortMsg = onSortMessage(
-      figma.currentPage,
-      msg.payload.properties,
-      msg.payload.directions,
-      msg.payload.gaps
-    );
+    const sortMsg = onSortMessage(figma.currentPage, msg.payload);
 
     if (sortMsg) {
       figma.ui.postMessage(sortMsg);

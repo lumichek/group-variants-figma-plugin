@@ -13,10 +13,13 @@ export const MESSAGE_GET_DIRECTIONS = 'MESSAGE_GET_DIRECTIONS';
 export const MESSAGE_GET_GAPS = 'MESSAGE_GET_GAPS';
 export const MESSAGE_GET_PROPERTIES_WITH_VALUES = 'MESSAGE_GET_PROPERTIES_WITH_VALUES';
 export const MESSAGE_CHANGE_PROPERTIES = 'MESSAGE_CHANGE_PROPERTIES';
+export const MESSAGE_GET_PADDINGS = 'MESSAGE_GET_PADDINGS';
 
 // Numbers
 export const DEFAULT_GAP = 40;
 
-// Gaps
-export const ROWS_GAP_FIELD = 'ROWS_GAP_FIELD';
-export const COLUMNS_GAP_FIELD = 'COLUMNS_GAP_FIELD';
+// Paddings
+export const LEFT = 'LEFT';
+export const TOP = 'TOP';
+export const RIGHT = 'RIGHT';
+export const BOTTOM = 'BOTTOM';

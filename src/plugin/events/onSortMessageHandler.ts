@@ -1,13 +1,21 @@
 import { MESSAGE_ERROR } from "../../common/constants";
-import { TDirections, TGaps, TPropertiesList, TVariants, TVariantsParent } from "../../common/types";
+import { TDirections, TGaps, TPaddings, TPropertiesList, TVariants, TVariantsParent } from "../../common/types";
 import { sortVariants } from "../variantsController";
 import { checkSelection } from "./utils";
 
 export function onSortMessage(
   page: PageNode,
-  properties: TPropertiesList,
-  directions: TDirections,
-  gaps: TGaps
+  {
+    properties,
+    directions,
+    gaps,
+    paddings
+  }: {
+    properties: TPropertiesList,
+    directions: TDirections,
+    gaps: TGaps,
+    paddings: TPaddings
+  }
 ) {
   const isSelected = checkSelection(page);
 
@@ -20,7 +28,7 @@ export function onSortMessage(
   const variants = variantsParent.children as TVariants;
 
   try {
-    sortVariants(variantsParent, variants, properties, {directions, gaps});
+    sortVariants(variantsParent, variants, properties, {directions, gaps, paddings});
 
     return null;
   } catch (_) {

@@ -1,4 +1,3 @@
-import { ROWS_GAP_FIELD, COLUMNS_GAP_FIELD } from "../../../common/constants";
 import {
   SortDirections,
   TBorders,
@@ -6,12 +5,15 @@ import {
   TGaps,
   TVariants,
   TPropertiesMap,
-  TPropertiesValuesOrders
+  TPropertiesValuesOrders,
+  TPaddings
 } from "../../../common/types";
-import { collectProperties, compareProperties, fillDirections, findColumnGap, findNextVariant, findRowGap } from "./utils";
+import { collectProperties, compareProperties, fillDirections, findColumnGap, findNewPaddings, findNextVariant, findRowGap } from "./utils";
 
 export function sortProperties(variants: TVariants, properties: TPropertiesMap) {
   let sortDirections: TDirections = {};
+  let sortDirectionsColumns: TDirections = {};
+  let sortDirectionsRows: TDirections = {};
   const borders: TBorders = {
     xFrom: 0,
     yFrom: 0,
@@ -52,9 +54,12 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
     xMax: true
   });
   const rowsBordersXFrom = prevRootRows ? (prevRootRows.x + prevRootRows.width) : 0;
-  const gaps: TGaps = {
-    [ROWS_GAP_FIELD]: rootRows.x,
-    [COLUMNS_GAP_FIELD]: rootColumns.y
+  const gaps: TGaps = {};
+  let paddings: TPaddings = {
+    LEFT: rootRows.x,
+    RIGHT: rootRows.x + rootRows.width,
+    TOP: rootColumns.y,
+    BOTTOM: rootColumns.y + rootColumns.height
   };
 
   let currentColumnBorders = borders;
@@ -67,6 +72,8 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
   let prevRowVariant = rootRows;
 
   let valuesOrders: TPropertiesValuesOrders = {};
+  let valuesOrdersColumns: TPropertiesValuesOrders = {};
+  let valuesOrdersRows: TPropertiesValuesOrders = {};
 
   while (currentColumnVariant || currentRowVariant) {
     currentColumnBorders = {
@@ -90,45 +97,72 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
       keys: rowsProperties,
       values: rowPropertiesValues,
     } = collectProperties(comparator, rootRows, currentRowVariant);
+    const sortDirectionsColumnsToAdd = fillDirections(columnProperties, SortDirections.COLUMNS);
+    const sortDirectionsRowsToAdd = fillDirections(columnProperties, SortDirections.ROWS);
 
     sortDirections = {
-      ...fillDirections(rowsProperties, SortDirections.ROWS),
-      ...fillDirections(columnProperties, SortDirections.COLUMNS),
+      ...sortDirectionsRowsToAdd,
+      ...sortDirectionsColumnsToAdd,
       ...sortDirections,
+    };
+    sortDirectionsColumns = {
+      ...sortDirectionsColumns,
+      ...sortDirectionsColumnsToAdd
+    };
+    sortDirectionsRows = {
+      ...sortDirectionsRows,
+      ...sortDirectionsRowsToAdd
     };
 
     for (const propertyKey of rowsProperties) {
-      if (!rowPropertiesValues[propertyKey]?.length ||
-        sortDirections[propertyKey] === SortDirections.COLUMNS
-      ) {
+      if (!rowPropertiesValues[propertyKey]?.length) {
+        continue;
+      }
+      if (!valuesOrdersRows[propertyKey]) {
+        valuesOrdersRows[propertyKey] = [];
+      }
+      rowPropertiesValues[propertyKey].forEach((val) => {
+        if (!valuesOrdersRows[propertyKey].includes(val)) {
+          valuesOrdersRows[propertyKey].push(val);
+        }
+      })
+
+      if (sortDirections[propertyKey] === SortDirections.COLUMNS) {
         continue;
       }
       if (!valuesOrders[propertyKey]) {
-        valuesOrders[propertyKey] = rowPropertiesValues[propertyKey] || [];
-      } else {
-        rowPropertiesValues[propertyKey].forEach((val) => {
-          if (!valuesOrders[propertyKey].includes(val)) {
-            valuesOrders[propertyKey].push(val);
-          }
-        })
+        valuesOrders[propertyKey] = [];
       }
+      rowPropertiesValues[propertyKey].forEach((val) => {
+        if (!valuesOrders[propertyKey].includes(val)) {
+          valuesOrders[propertyKey].push(val);
+        }
+      })
     }
 
     for (const propertyKey of columnProperties) {
-      if (!columnPropertiesValues[propertyKey]?.length ||
-        sortDirections[propertyKey] === SortDirections.ROWS
-      ) {
+      if (!columnPropertiesValues[propertyKey]?.length) {
+        continue;
+      }
+      if (!valuesOrdersColumns[propertyKey]) {
+        valuesOrdersColumns[propertyKey] = [];
+      }
+      columnPropertiesValues[propertyKey].forEach((val) => {
+        if (!valuesOrdersColumns[propertyKey].includes(val)) {
+          valuesOrdersColumns[propertyKey].push(val);
+        }
+      })
+      if (sortDirections[propertyKey] === SortDirections.ROWS) {
         continue;
       }
       if (!valuesOrders[propertyKey]) {
-        valuesOrders[propertyKey] = columnPropertiesValues[propertyKey] || [];
-      } else {
-        columnPropertiesValues[propertyKey].forEach((val) => {
-          if (!valuesOrders[propertyKey].includes(val)) {
-            valuesOrders[propertyKey].push(val);
-          }
-        })
+        valuesOrders[propertyKey] = [];
       }
+      columnPropertiesValues[propertyKey].forEach((val) => {
+        if (!valuesOrders[propertyKey].includes(val)) {
+          valuesOrders[propertyKey].push(val);
+        }
+      })
     }
 
     for (const rowProperty of rowsProperties) {
@@ -146,22 +180,28 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
     prevColumnVariant = currentColumnVariant;
     prevRowVariant = currentRowVariant;
 
-    if (currentColumnVariant?.x < gaps[ROWS_GAP_FIELD]) {
-      gaps[ROWS_GAP_FIELD] = currentColumnVariant.x;
+    if (currentRowVariant) {
+      paddings = findNewPaddings(paddings, currentRowVariant);
     }
-    if (currentRowVariant?.x < gaps[ROWS_GAP_FIELD]) {
-      gaps[ROWS_GAP_FIELD] = currentRowVariant.x;
+    if (currentColumnVariant) {
+      paddings = findNewPaddings(paddings, currentColumnVariant);
     }
-    if (currentColumnVariant?.y < gaps[COLUMNS_GAP_FIELD]) {
-      gaps[COLUMNS_GAP_FIELD] = currentColumnVariant.y;
-    }
-    if (currentRowVariant?.y < gaps[COLUMNS_GAP_FIELD]) {
-      gaps[COLUMNS_GAP_FIELD] = currentRowVariant.y;
-    }
-    console.log('currentColumnVariant', currentColumnVariant?.x, currentColumnVariant?.y);
+
     currentColumnVariant = currentColumnVariant && next(currentColumnBorders);
-    // console.log('currentRowVariant', currentRowVariant?.x, currentRowVariant?.y);
     currentRowVariant = currentRowVariant && next(currentRowBorders);
+  }
+
+  for(const propertyKey of Object.keys(valuesOrders)) {
+    if (valuesOrdersColumns[propertyKey]?.length && valuesOrdersRows[propertyKey]?.length) {
+      if (valuesOrdersColumns[propertyKey].length > valuesOrdersRows[propertyKey].length) {
+        sortDirections[propertyKey] = SortDirections.COLUMNS;
+        valuesOrders[propertyKey] = valuesOrdersColumns[propertyKey];
+      }
+      if (valuesOrdersRows[propertyKey].length > valuesOrdersColumns[propertyKey].length) {
+        sortDirections[propertyKey] = SortDirections.ROWS;
+        valuesOrders[propertyKey] = valuesOrdersRows[propertyKey];
+      }
+    }
   }
 
   for(const property of Object.keys(properties)) {
@@ -173,6 +213,7 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
   return {
     valuesOrders,
     directions: sortDirections,
-    gaps
+    gaps,
+    paddings
   };
 }

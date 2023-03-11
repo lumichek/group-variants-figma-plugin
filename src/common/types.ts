@@ -58,6 +58,7 @@ export type TMessage<T = any> = {
 export type TOptions = {
   directions: TDirections;
   gaps?: TGaps;
+  paddings?: TPaddings
 };
 
 export type TVariant = ComponentNode;
@@ -66,4 +67,11 @@ export type TVariantsParent = ComponentSetNode;
 
 export type TPropertiesValuesOrders = {
   [key: string]: string[];
-}
+};
+
+export type TPaddings = {
+  LEFT: number;
+  TOP: number;
+  RIGHT: number;
+  BOTTOM: number;
+};

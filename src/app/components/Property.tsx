@@ -41,7 +41,9 @@ export default function Property(props: TPropertyProps) {
             id={`${title}-columns`}
             isChecked={direction === SortDirections.COLUMNS}
           />
-          <Input value={gap || 0} onChange={onChangeGap} unit={'px'} />
+          <div className='section__input'>
+            <Input value={gap || 0} onChange={onChangeGap} unit={'px'} />
+          </div>
         </div>
       </div>
       <PropertyValues values={values} onChange={onChangeValues} />

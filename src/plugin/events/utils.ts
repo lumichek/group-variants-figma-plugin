@@ -22,10 +22,10 @@ export function checkSelection(page: PageNode) {
   return true;
 }
 
-export function getPropertiesInfo(componentSet: TVariantsParent, variants: TVariants) {
+export function getPropertiesInfo(variantsParent: TVariantsParent, variants: TVariants) {
   const [root] = variants;
-  const propertiesList = fetchProperties(componentSet, PropertiesListType);
-  const propertiesMap = fetchProperties(componentSet, PropertiesMapType);
+  const propertiesList = fetchProperties(variantsParent, PropertiesListType);
+  const propertiesMap = fetchProperties(variantsParent, PropertiesMapType);
   const preparedVariants = variants.map((variant) => {
     return {
       x: variant.x,
@@ -35,7 +35,7 @@ export function getPropertiesInfo(componentSet: TVariantsParent, variants: TVari
       variantProperties: {...variant.variantProperties}
     };
   });
-  const {directions, gaps, valuesOrders} = sortProperties(preparedVariants as TVariants, propertiesMap);
+  const {directions, gaps, paddings, valuesOrders} = sortProperties(preparedVariants as TVariants, propertiesMap);
   const {name: propertiesString} = root;
   const propertiesOrders = propertiesString.split(', ');
 
@@ -51,10 +51,16 @@ export function getPropertiesInfo(componentSet: TVariantsParent, variants: TVari
     propertiesListSorted = propertiesList;
   }
 
+  const calculatePaddings = {...paddings};
+
+  calculatePaddings.RIGHT = variantsParent.width - calculatePaddings.RIGHT;
+  calculatePaddings.BOTTOM = variantsParent.height - calculatePaddings.BOTTOM;
+
   return {
     properties: propertiesListSorted,
     directions,
     gaps,
+    paddings: calculatePaddings,
     valuesOrders
   };
 }

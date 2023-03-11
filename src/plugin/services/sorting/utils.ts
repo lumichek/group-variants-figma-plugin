@@ -6,7 +6,8 @@ import {
   TPropertiesValues,
   TVariant,
   TVariants,
-  TPropertiesValuesList
+  TPropertiesValuesList,
+  TPaddings
 } from './../../../common/types';
 
 export function findRowGap(prevVariant: TVariant, variant: TVariant, variants: TVariants) {
@@ -177,4 +178,23 @@ export function fillDirections(
 
 export function mapPropertiesValuesToStr(propertiesValues: TPropertiesValuesList): string {
   return propertiesValues.map(({key, value}) => `${key}=${value}`).join(', ');
+}
+
+export function findNewPaddings(paddings: TPaddings, variant: TVariant) {
+  const newPaddings = {...paddings};
+
+  if (variant.x < paddings.LEFT) {
+    newPaddings.LEFT = variant.x;
+  }
+  if ((variant.x + variant.width) > paddings.RIGHT) {
+    newPaddings.RIGHT = variant.x + variant.width;
+  }
+  if (variant.y < paddings.TOP) {
+    newPaddings.TOP = variant.y;
+  }
+  if ((variant.y + variant.height) > paddings.BOTTOM) {
+    newPaddings.BOTTOM = variant.y + variant.height;
+  }
+
+  return newPaddings;
 }

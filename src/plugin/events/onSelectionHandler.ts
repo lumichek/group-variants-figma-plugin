@@ -5,6 +5,7 @@ import {
   MESSAGE_ERROR,
   MESSAGE_GET_DIRECTIONS,
   MESSAGE_GET_GAPS,
+  MESSAGE_GET_PADDINGS,
   MESSAGE_GET_PROPERTIES,
   MESSAGE_GET_PROPERTIES_WITH_VALUES
 } from "../../common/constants";
@@ -26,7 +27,7 @@ export function onSelectionChange(page: PageNode): TMessage | TMessage[] {
   const variants = variantsParent.children as TVariants;
 
   try {
-    const {properties, directions, gaps, valuesOrders} = getPropertiesInfo(variantsParent, variants);
+    const {properties, directions, gaps, paddings, valuesOrders} = getPropertiesInfo(variantsParent, variants);
     const propertiesWithValues = properties.map(({key, values}) => {
       const calculatedValues = valuesOrders[key] || [];
       if (calculatedValues.length < values.length) {
@@ -60,6 +61,10 @@ export function onSelectionChange(page: PageNode): TMessage | TMessage[] {
         payload: gaps
       },
       {
+        type: MESSAGE_GET_PADDINGS,
+        payload: paddings
+      },
+      {
         type: MESSAGE_GET_PROPERTIES_WITH_VALUES,
         payload: propertiesWithValues
       },
@@ -68,7 +73,8 @@ export function onSelectionChange(page: PageNode): TMessage | TMessage[] {
         payload: {
           properties: propertiesWithValues,
           directions,
-          gaps
+          gaps,
+          paddings
         }
       }
     ];

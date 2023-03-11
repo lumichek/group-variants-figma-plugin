@@ -1,4 +1,3 @@
-import { COLUMNS_GAP_FIELD, ROWS_GAP_FIELD } from "../../../common/constants";
 import {
   SortDirections,
   TOptions,
@@ -11,7 +10,7 @@ import { mapPropertiesValuesToStr } from "./utils";
 export function sortVariants(
   parentVariant: TVariantsParent, variants: TVariants, properties: TPropertiesList, options: TOptions
 ): void {
-  const {directions, gaps} = options;
+  const {directions, gaps, paddings} = options;
   const reversedProperties = properties.reverse();
 
   let rows = [];
@@ -180,8 +179,8 @@ export function sortVariants(
     columnsMaxWidths[columnIndex] = maxColumnWidth;
   }
 
-  let xCoord = gaps[ROWS_GAP_FIELD];
-  let yCoord = gaps[COLUMNS_GAP_FIELD];
+  let xCoord = paddings.LEFT;
+  let yCoord = paddings.TOP;
 
   if (rows.length === 0) {
     rows.push(null);
@@ -196,7 +195,7 @@ export function sortVariants(
     let maxColumnWidth = 0;
     let isEmptyRow = true;
 
-    xCoord = gaps[ROWS_GAP_FIELD];
+    xCoord = paddings.LEFT;
 
     for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
       const row = rows[rowIndex];
@@ -241,8 +240,9 @@ export function sortVariants(
     }
   }
 
+  parentVariant.layoutMode = 'NONE';
   parentVariant.resizeWithoutConstraints(
-    xCoord + gaps[ROWS_GAP_FIELD],
-    yCoord + gaps[COLUMNS_GAP_FIELD]
+    xCoord + paddings.RIGHT,
+    yCoord + paddings.BOTTOM
   );
 };
