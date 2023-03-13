@@ -180,15 +180,13 @@ export function sortProperties(variants: TVariants, properties: TPropertiesMap) 
     prevColumnVariant = currentColumnVariant;
     prevRowVariant = currentRowVariant;
 
-    if (currentRowVariant) {
-      paddings = findNewPaddings(paddings, currentRowVariant);
-    }
-    if (currentColumnVariant) {
-      paddings = findNewPaddings(paddings, currentColumnVariant);
-    }
 
     currentColumnVariant = currentColumnVariant && next(currentColumnBorders);
     currentRowVariant = currentRowVariant && next(currentRowBorders);
+  }
+
+  for (const variant of variants) {
+    paddings = findNewPaddings(paddings, variant);
   }
 
   for(const propertyKey of Object.keys(valuesOrders)) {
